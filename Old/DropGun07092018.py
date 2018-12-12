@@ -13,14 +13,13 @@ from matplotlib.dates import DateFormatter
 import bisect
 import csv
 from MyFunctions import is_number,LoadCoreCloud,loadFAAMCore,ChangeTimeBaseAvg, BinLinearV2, KorolevCorrectedD
-from MyFunctions import Level2_D_Correction_vector, ReuterBakanDiameter, DimensionlessDistance
+from MyFunctions import Level2_D_Correction_vector, ReuterBakanDiameter
 import os
 from numpy import genfromtxt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import math
 import pandas as pd
-from GrayscaleFunctions import LoadGrayScaleStats, GrayscaleRatios, sVol_EAW_INT,Get_DLow_D0_model
-from scipy.stats.stats import pearsonr
+from GrayscaleFunctions import LoadGrayScaleStats, GrayscaleRatios
 
 #ParticleTimesWv=[]
 #PartGrayStatsWv=[]
@@ -44,13 +43,13 @@ def DropGun_Stats_All():
 
 
     #60um_25_50_75_run2
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/20180327143000/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/'
-    #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
-    #Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    #AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    #D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    #DropGun_Stats['60um_25_50_75_run2']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/20180327143000/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/'
+    ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
+    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
+    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0)
+    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
+    DropGun_Stats['60um_25_50_75_run2']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
 
     #60um_40_50_60
     #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_40_50_60/20180327133536/Output/'
@@ -59,82 +58,49 @@ def DropGun_Stats_All():
     #PltTitle='60um_40_50_60'
 
     #60um_40_50_60_run2
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_40_50_60_run2/20180327140438/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_40_50_60_run2/'
-    #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
-    #Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    #AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    #D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    #DropGun_Stats['60um_40_50_60_run2']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_40_50_60_run2/20180327140438/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_40_50_60_run2/'
+    ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
+    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
+    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0)
+    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
+    DropGun_Stats['60um_40_50_60_run2']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
 
     #90um_40_50_60
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_40_50_60/20180326143716/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_40_50_60/'
-    #ExpDate= datetime.datetime(2018, 3, 26, 1, 0, 0) #1 hour time difference between stage and CIP
-    #Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    #AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    #D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    #DropGun_Stats['90um_40_50_60']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_40_50_60/20180326143716/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_40_50_60/'
+    ExpDate= datetime.datetime(2018, 3, 26, 1, 0, 0) #1 hour time difference between stage and CIP
+    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
+    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0)
+    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
+    DropGun_Stats['90um_40_50_60']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
 
     #90um_25_50_75_run2
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_25_50_75_run2/20180326150258/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_25_50_75_run2/'
-    #ExpDate= datetime.datetime(2018, 3, 26, 1, 0, 0) #1 hour time difference between stage and CIP
-    #Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    #AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    #D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    #DropGun_Stats['90um_25_50_75_run2']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_25_50_75_run2/20180326150258/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_25_50_75_run2/'
+    ExpDate= datetime.datetime(2018, 3, 26, 1, 0, 0) #1 hour time difference between stage and CIP
+    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
+    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0)
+    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
+    DropGun_Stats['90um_25_50_75_run2']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
 
     #120um_25_50_75_run2
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/20180327100000/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/'
-    #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
-    #Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    #AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    #D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    #DropGun_Stats['120um_25_50_75_run2']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/20180327100000/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/'
+    ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
+    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
+    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0)
+    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
+    DropGun_Stats['120um_25_50_75_run2']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
 
     #120um_40_50_60
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_40_50_60/20180327092820/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_40_50_60/'
-    #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
-    #Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    #AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    #D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    #DropGun_Stats['120um_40_50_60']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
-
-
-
-    #********************************* September 2018 ****************************************************
-    #60um_255075
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/20180927111105/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/'
-    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0) 
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_40_50_60/20180327092820/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_40_50_60/'
+    ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
     Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
+    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0)
     D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    DropGun_Stats['60um_25_50_75']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
-    
-    #90um_25_50_75
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/20180927134617/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/'
-    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    DropGun_Stats['90um_25_50_75']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
-
-    #90um_25_50_75
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/Both/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/'
-    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    DropGun_Stats['120um_25_50_75']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
-
-
-    #AF_Level2_avg, AF_Level1_avg, AF_Level0_avg, D_Level2_avg, D_Level1_avg, D_Level0_avg, BinCentre,D_KorolevCorr_avg, VoidRatioAvg
+    DropGun_Stats['120um_40_50_60']=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
 
     return DropGun_Stats
 
@@ -368,7 +334,7 @@ def PlotDiameterAF():
     #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/'
     #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
     #PltTitle='60um_25_50_75_run2'
-    #ActualDiameter=65
+    #ActualDiameter=75
 
     #60um_40_50_60
     #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_40_50_60/20180327133536/Output/'
@@ -381,7 +347,7 @@ def PlotDiameterAF():
     #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_40_50_60_run2/'
     #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
     #PltTitle='60um_40_50_60_run2'
-    #ActualDiameter=65
+    #ActualDiameter=75
 
     #90um_40_50_60
     #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_40_50_60/20180326143716/Output/'
@@ -395,14 +361,14 @@ def PlotDiameterAF():
     #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_25_50_75_run2/'
     #ExpDate= datetime.datetime(2018, 3, 26, 1, 0, 0) #1 hour time difference between stage and CIP
     #PltTitle='90um_25_50_75_run2'
-    #ActualDiameter=85
+    #ActualDiameter=90
 
     #120um_25_50_75_run2
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/20180327100000/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/'
-    #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP   
-    #PltTitle='120um_25_50_75_run2'
-    #ActualDiameter=105
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/20180327100000/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/'
+    ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP   
+    PltTitle='120um_25_50_75_run2'
+    ActualDiameter=105
     
     #120um_40_50_60
     #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_40_50_60/20180327092820/Output/'
@@ -411,31 +377,9 @@ def PlotDiameterAF():
     #PltTitle='120um_40_50_60'
     #ActualDiameter=105
 
-    
-    #********************************* September 2018 ****************************************************
-    #60um_255075
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/20180927111105/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/'
-    #ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0) 
-    #ActualDiameter = 55 
-    
-    #90um_25_50_75
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/20180927134617/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/'
-    #ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    #ActualDiameter = 80
-    
-    #120um_25_50_75
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/Both/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/'
-    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    PltTitle='120um_25_50_75'
-    ActualDiameter = 90
-
-
     StageFile='StagePositions_exp001.csv'
     Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
+    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0)
     #PlotNumberOfParticles(FilledArea,VoidArea,Particle_X,DiameterLevel0,PartGrayStatsWv,StagePath,'Nparticles'+PltTitle)
     #Figurename=StagePath+'DiameterPosition'
     #PlotGrayscaleDiameter(DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X,Figurename,PltTitle)
@@ -446,27 +390,11 @@ def PlotDiameterAF():
     #PlotXY_D_AF(StagePath, PltTitle,Particle_X, Particle_Y, AreaFraction0,DiameterLevel2)
     
     D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    #D_2stage=Level2_D_Correction_vector(D_KorolevCorr, AreaFraction2)
-    D_ReuterBakan=ReuterBakanDiameter(DiameterLevel0,AreaFraction0)
-    
-    D_ReuterBakan_median, D_ReuterBakan_25,D_ReuterBakan_75, \
-        D_ReuterBakan_c6_median,D_ReuterBakan_c6_25,D_ReuterBakan_c6_75, \
-        D_Korolev_median,D_Korolev_25,D_Korolev_75, \
-        D_Korolev_c6_median, D_Korolev_c6_25, D_Korolev_c6_75, \
-        D_median, D_25, D_75, \
-        D_c6_median, D_c6_25, D_c6_75=PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,ActualDiameter,29)
+    D_2stage=Level2_D_Correction_vector(D_KorolevCorr, AreaFraction2)
     
     
-    print(D_ReuterBakan_c6_median)
-    print(D_ReuterBakan_c6_75-D_ReuterBakan_c6_25)
-    print(D_Korolev_c6_median)
-    print(D_Korolev_c6_75-D_Korolev_25)
-    print(D_c6_median)
-    print(D_c6_75-D_c6_25)
-
-    
-    #Figurename=StagePath+'D_2stage_'+PltTitle
-    #Plot2StageCorrD(D_2stage, D_KorolevCorr,DiameterLevel1, Particle_X,Figurename,PltTitle,ActualDiameter,22)
+    Figurename=StagePath+'D_2stage_'+PltTitle
+    Plot2StageCorrD(D_2stage, D_KorolevCorr,DiameterLevel1, Particle_X,Figurename,PltTitle,ActualDiameter,22)
     
     
     #D_BG_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterBG)
@@ -590,7 +518,8 @@ def LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile):
                 #PartGrayStatsWv= np.append(PartGrayStatsWv,TmpStats,axis=0)
                 ParticleStatsWv= np.append(ParticleStatsWv,TmpStats,axis=0)
             
-        
+            
+    #ExpDate= datetime.datetime(2017, 10, 18, 0, 0, 0)
     ParticleTime=[ExpDate + datetime.timedelta(seconds=int(ParticleTimesWv[x][0])) for x in range(len(ParticleTimesWv))]          
 
     #Load stage position
@@ -598,8 +527,7 @@ def LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile):
     #StageFile='StagePositions_exp001.csv'  
     StageY = np.loadtxt(StagePath+StageFile,skiprows=2,usecols=range(2,3),delimiter=',')      
     StageX = np.loadtxt(StagePath+StageFile,skiprows=2,usecols=range(1,2),delimiter=',') 
-    #str2date = lambda x: datetime.datetime.strptime(x.decode("utf-8"), '%d/%m/%Y %H:%M:%S')
-    str2date = lambda x: datetime.datetime.strptime(x.decode("utf-8"), '%d/%m/%y %H:%M:%S.%f')
+    str2date = lambda x: datetime.datetime.strptime(x.decode("utf-8"), '%d/%m/%Y %H:%M:%S')
     StageTimeTmp= np.genfromtxt(StagePath+StageFile,skip_header=2,usecols=range(0),delimiter=',',converters= {0: str2date})
     StageTime=[StageTimeTmp[x][0] for x in range(len(StageTimeTmp))]
     
@@ -610,8 +538,7 @@ def LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile):
     for i in range(len(ParticleTime)):
         Match[i]=bisect.bisect_left(StageTime, ParticleTime[i])
         if Match[i] in range(0,len(StageX)-1):
-            #if np.absolute(((ParticleTime[i]-StageTime[int(Match[i])])).seconds)<2 :
-            if np.absolute(((ParticleTime[i]-StageTime[int(Match[i])])).total_seconds())<2 :
+            if np.absolute(((ParticleTime[i]-StageTime[int(Match[i])])).seconds)<1 :
                 Particle_X[i]=StageX[int(Match[i])]
                 Particle_Y[i]=StageY[int(Match[i])]
             else: 
@@ -675,8 +602,8 @@ def PlotGSTimeSeries(Particle_X, Particle_Y, DiameterLevel0,DiameterLevel1,Diame
 def Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_Y):
     
     StartBin=0
-    EndBin=100
-    NumBins=100
+    EndBin=50
+    NumBins=50
     
     #Area fraction 2
     AreaFraction2_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(AreaFraction2,Particle_Y,StartBin,EndBin,NumBins)
@@ -723,7 +650,7 @@ def Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,Ar
     D_KorolevCorr_avg = [np.nanmedian(x) for x in filtered_data]
     
     AreaRatio = VoidArea / FilledArea
-    AreaRatio_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(AreaRatio,Particle_Y,0,100,100)
+    AreaRatio_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(AreaRatio,Particle_Y,0,50,50)
     mask = ~np.isnan(AreaRatio_bin) # remove nans
     filtered_data = [d[m] for d, m in zip(AreaRatio_bin.T, mask.T)]
     VoidRatioAvg = [np.nanmedian(x) for x in filtered_data]
@@ -1087,7 +1014,17 @@ def PlotAFvsD(DropGun_Stats):
     #plt.savefig(FilePath+PltTitle+'.png',dpi=200)
     #plt.close(fig)
    
+#_______________________________________________________________________________________    
+# stageX in mm
+# ActualDiameter in um    
 
+def DimensionlessDistance(StageX,ActualDiameter,CentreOfDOF):
+    Lambda = 0.000658	# in mm
+    #CentreOfDOF=22 # mm
+    ActualDiameter/=1E3 # convert to mm
+    Zd = (4 * Lambda * (StageX-CentreOfDOF)) / (ActualDiameter**2)
+    #plt.plot(StageX, Zd,'o')
+    return Zd
 
 #_______________________________________________________________________________________    
 
@@ -1114,7 +1051,7 @@ def PlotAreaFractionZd(AreaFraction0,AreaFraction1,AreaFraction2,Zd,Figurename,P
     plt.gca().set_ylim([-0.05, 1.05])
     
     plt.ylabel('Level 2 / Total area')
-    plt.xlabel('Z$_{d}$')
+    plt.xlabel('Zd')
     plt.gca().set_xlim([-6, 6])
 
     #Area fraction 1
@@ -1213,7 +1150,7 @@ def AllAreaFractionZd(DropGun_Stats,SaveFig):
     plt.ylabel('Level 2 / Total area')
     plt.ylim((-0.05,1.05))
     #plt.xlim((1,5))
-    plt.xlabel('Z$_{d}$')
+    plt.xlabel('Zd')
     plt.grid(True)
     
     Figurename=FilePath+'AF_Zd'
@@ -1228,10 +1165,10 @@ def AllAreaFractionZd(DropGun_Stats,SaveFig):
 
 # Load modelled CIP data
 
-def LoadModelGrayScale(GSpath):
+def LoadModelGrayScale():
 
     # Load grayscale stats
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP/'
     for filena in os.listdir(GSpath):
         if filena.endswith(".h5"):
             print(filena)
@@ -1273,7 +1210,7 @@ def ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll):
         ParticleStatsTmp=ParticleStatsWv[np.where(ActualDiameterAll==D0),:] 
         ParticleStatsExp=ParticleStatsTmp[0,:,:]
         Particle_X=StageXAll[np.where(ActualDiameterAll==D0)]
-        AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea, VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_X, ParticleStatsExp,0,255075)
+        AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea, VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_X, ParticleStatsExp,0)
         #PlotNumberOfParticles(FilledArea,VoidArea,Particle_X,DiameterLevel0,ParticleStatsExp,SavePath,'Nparticles_VoidRatio_'+str(D0)+'um')
         D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
         #Particle_X_Flag=Particle_X[np.where(DiameterLevel1==DiameterLevel1)]
@@ -1503,107 +1440,16 @@ def CompareModelDropgun(DropGun_Stats,Model_Stats):
 
 #_______________________________________________________________________________________  
 
-def PLot_Areafraction_6Panel_255075():
-    
-    
-    FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'
-    ParticleStatsWv,ActualDiameterAll,StageXAll=LoadModelGrayScale(FilePath)
-    Model_Stats=ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll)
-    
-    DropGun_Stats=DropGun_Stats_All()
-    
-    
+def PLot_Areafraction_6Panel(DropGun_Stats,Model_Stats):
+    FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP/'
     fig=plt.figure(figsize=(10,10))
-    plt.rcParams.update({'font.size': 14})
-    #ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']
-    ExpList=['120um_25_50_75','90um_25_50_75','60um_25_50_75']     
-    ActualDiameterList=[90,80,55] 
-    CentreOfDOF_DG=29
-    
-    
-    DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,1, ExpList, ActualDiameterList, CentreOfDOF_DG, '25', '50', '75')
-    DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats,1, ExpList, ActualDiameterList, CentreOfDOF_DG, '25', '50', '75')
+    DropGunModel_AF_Zd(DropGun_Stats,Model_Stats)
+    DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats)
     Figurename=FilePath+'AreaFraction_ModelDG'
     plt.savefig(Figurename,dpi=200)
     plt.close(fig) 
 
-#_______________________________________________________________________________________  
 
-def PLot_Areafraction_6Panel_305070():
-    
-    
-    FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_305070/'
-    ParticleStatsWv,ActualDiameterAll,StageXAll=LoadModelGrayScale(FilePath)
-    Model_Stats=ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll)
-    
-    DropGun_Stats=DropGun_Stats_All()
-    
-    
-    fig=plt.figure(figsize=(10,10))
-    plt.rcParams.update({'font.size': 12})
-    #ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']
-    ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']     
-    ActualDiameterList=[100,85,65] 
-    CentreOfDOF_DG=22
-    
-    
-    DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,0, ExpList, ActualDiameterList, CentreOfDOF_DG, '30', '50', '70')
-    DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats,0, ExpList, ActualDiameterList, CentreOfDOF_DG, '30', '50', '70')
-    Figurename=FilePath+'AreaFraction_ModelDG'
-    plt.savefig(Figurename,dpi=200)
-    plt.close(fig) 
-
-#_______________________________________________________________________________________  
-
-def PLot_Areafraction_6Panel_405070():
-    
-    
-    FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_405070/'
-    ParticleStatsWv,ActualDiameterAll,StageXAll=LoadModelGrayScale(FilePath)
-    Model_Stats=ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll)
-    
-    DropGun_Stats=DropGun_Stats_All()
-    
-    
-    fig=plt.figure(figsize=(10,10))
-    plt.rcParams.update({'font.size': 12})
-    #ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']
-    ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']     
-    ActualDiameterList=[100,85,65] 
-    CentreOfDOF_DG=22
-    
-    
-    DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,0, ExpList, ActualDiameterList, CentreOfDOF_DG, '40', '50', '70')
-    DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats,0, ExpList, ActualDiameterList, CentreOfDOF_DG, '40', '50', '70')
-    Figurename=FilePath+'AreaFraction_ModelDG'
-    plt.savefig(Figurename,dpi=200)
-    plt.close(fig) 
-
-#_______________________________________________________________________________________  
-
-def PLot_Areafraction_6Panel_255067():
-    
-    
-    FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255067/'
-    ParticleStatsWv,ActualDiameterAll,StageXAll=LoadModelGrayScale(FilePath)
-    Model_Stats=ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll)
-    
-    DropGun_Stats=DropGun_Stats_All()
-    
-    
-    fig=plt.figure(figsize=(10,10))
-    plt.rcParams.update({'font.size': 12})
-    #ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']
-    ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']     
-    ActualDiameterList=[100,85,65] 
-    CentreOfDOF_DG=22
-    
-    
-    DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,0, ExpList, ActualDiameterList, CentreOfDOF_DG, '25', '50', '67')
-    DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats,0, ExpList, ActualDiameterList, CentreOfDOF_DG, '25', '50', '67')
-    Figurename=FilePath+'AreaFraction_ModelDG'
-    plt.savefig(Figurename,dpi=200)
-    plt.close(fig)
 
 
 
@@ -1616,12 +1462,18 @@ def PLot_Areafraction_6Panel_255067():
     
     
     
-def DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, ActualDiameterList, CentreOfDOF_DG, Low, Medium, High):     
-        
+def DropGunModel_AF_Zd(DropGun_Stats,Model_Stats):     
+    ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']    
+    #ExpList=['120um_40_50_60','90um_40_50_60','60um_40_50_60_run2']  
+    ActualDiameterList=[105,90,65] 
+    #ActualDiameterList=[105,90,75]
+    #FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/'
+    CentreOfDOF_DG=22
+    
     
     ModelDiameterList=np.linspace(50,150,21)
     ModelList=[]
-    CentreOfDOF_Model=50
+    CentreOfDOF_Model=20
     for i in range(len(ModelDiameterList)-1):
         ModelList.append(str(int(ModelDiameterList[i])))    
         
@@ -1633,18 +1485,15 @@ def DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, ActualD
         ActualDiameter=ModelDiameterList[i]
         Zd=DimensionlessDistance(Model_Stats[ModelList[i]][6][:],ActualDiameter,CentreOfDOF_Model)
         AreaFraction=Model_Stats[ModelList[i]][2][:]
-        plt.plot(Zd,AreaFraction,marker='o',markersize=2,linestyle='None',color='gray')
+        plt.plot(Zd,AreaFraction,marker='o',markersize=2,linestyle='None',color='black')
     
+    for i in range(len(ExpList)):
+        ActualDiameter=ActualDiameterList[i]
+        Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
+        AreaFraction=DropGun_Stats[ExpList[i]][2][:]
+        plt.plot(Zd,AreaFraction,marker='+',markersize=5,linestyle='None',color='red')
     
-    if IncludeDropGun == 1 :
-        for i in range(len(ExpList)):
-            ActualDiameter=ActualDiameterList[i]
-            Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
-            AreaFraction=DropGun_Stats[ExpList[i]][2][:]
-            plt.plot(Zd,AreaFraction,marker='+',markersize=5,linestyle='None',color='red')
-    
-    
-    plt.ylabel('A$_{'+Low+' - '+ Medium+'}$ / A$_{'+Low+' - 100}$')
+    plt.ylabel('Area 25% / Total area')
     plt.ylim((-0.05,1.05))
     plt.xlim((-10,10))
     plt.grid(True)
@@ -1656,17 +1505,16 @@ def DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, ActualD
         ActualDiameter=ModelDiameterList[i]
         Zd=DimensionlessDistance(Model_Stats[ModelList[i]][6][:],ActualDiameter,CentreOfDOF_Model)
         AreaFraction=Model_Stats[ModelList[i]][1][:]
-        plt.plot(Zd,AreaFraction,marker='o',markersize=2,linestyle='None',color='gray')
+        plt.plot(Zd,AreaFraction,marker='o',markersize=2,linestyle='None',color='black')
     
-    if IncludeDropGun == 1 :
-        for i in range(len(ExpList)):
-            ActualDiameter=ActualDiameterList[i]
-            Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
-            AreaFraction=DropGun_Stats[ExpList[i]][1][:]
-            plt.plot(Zd,AreaFraction,marker='+',markersize=5,linestyle='None',color='red')
+    for i in range(len(ExpList)):
+        ActualDiameter=ActualDiameterList[i]
+        Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
+        AreaFraction=DropGun_Stats[ExpList[i]][1][:]
+        plt.plot(Zd,AreaFraction,marker='+',markersize=5,linestyle='None',color='red')
     
     
-    plt.ylabel('A$_{'+Medium+' - '+ High+'}$ / A$_{'+Low+' - 100}$')
+    plt.ylabel('Area 50% / Total area')
     plt.ylim((-0.05,1.05))
     plt.xlim((-10,10))
     plt.grid(True)
@@ -1680,21 +1528,20 @@ def DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, ActualD
         AreaFraction=Model_Stats[ModelList[i]][0][:]
         Exp=ModelList[i]+', D0 = '+str(ModelDiameterList[i])+' μm'
         #Size='D0 = '+str(ActualDiameterList[i])+' μm'
-        plt.plot(Zd,AreaFraction, label=Exp,marker='o',markersize=2,linestyle='None',color='gray')
+        plt.plot(Zd,AreaFraction, label=Exp,marker='o',markersize=2,linestyle='None',color='black')
     
     
-    if IncludeDropGun == 1 :
-        for i in range(len(ExpList)):
-            ActualDiameter=ActualDiameterList[i]
-            Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
-            AreaFraction=DropGun_Stats[ExpList[i]][0][:]
-            plt.plot(Zd,AreaFraction,marker='+',markersize=5,linestyle='None',color='red')
+    for i in range(len(ExpList)):
+        ActualDiameter=ActualDiameterList[i]
+        Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
+        AreaFraction=DropGun_Stats[ExpList[i]][0][:]
+        plt.plot(Zd,AreaFraction,marker='+',markersize=5,linestyle='None',color='red')
 
     #plt.legend()
-    plt.ylabel('A$_{'+High+' - 100}$ / A$_{'+Low+' - 100}$')
+    plt.ylabel('Area 75% / Total area')
     plt.ylim((-0.05,1.05))
     plt.xlim((-10,10))
-    plt.xlabel('Z$_{d}$')
+    plt.xlabel('Zd')
     plt.grid(True)
 
 
@@ -1709,11 +1556,17 @@ def DropGunModel_AF_Zd(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, ActualD
     
     
     
-def DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, ActualDiameterList, CentreOfDOF_DG, Low, Medium, High):     
-        
+def DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats):     
+    ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']    
+    #ExpList=['120um_40_50_60','90um_40_50_60','60um_40_50_60_run2']  
+    ActualDiameterList=[105,90,65] 
+    #ActualDiameterList=[105,90,75]
+    #FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/'
+    CentreOfDOF_DG=22
+    
     ModelDiameterList=np.linspace(50,150,21)
     ModelList=[]
-    CentreOfDOF_Model=50
+    CentreOfDOF_Model=20
     for i in range(len(ModelDiameterList)-1):
         ModelList.append(str(int(ModelDiameterList[i])))    
         
@@ -1727,19 +1580,17 @@ def DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, Actua
         AreaFraction2=np.array(Model_Stats[ModelList[i]][0][:])
         AreaFraction1=np.array(Model_Stats[ModelList[i]][1][:])
         AreaFraction21=AreaFraction2/AreaFraction1
-        plt.plot(Zd,AreaFraction21,marker='o',markersize=2,linestyle='None',color='gray')
+        plt.plot(Zd,AreaFraction21,marker='o',markersize=2,linestyle='None',color='black')
     
-    if IncludeDropGun == 1 :
-        for i in range(len(ExpList)):
-            ActualDiameter=ActualDiameterList[i]
-            Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
-            AreaFraction2=np.array(DropGun_Stats[ExpList[i]][0][:])
-            AreaFraction1=np.array(DropGun_Stats[ExpList[i]][1][:])
-            AreaFraction21=AreaFraction2/AreaFraction1
-            plt.plot(Zd,AreaFraction21,marker='+',markersize=5,linestyle='None',color='red')
+    for i in range(len(ExpList)):
+        ActualDiameter=ActualDiameterList[i]
+        Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
+        AreaFraction2=np.array(DropGun_Stats[ExpList[i]][0][:])
+        AreaFraction1=np.array(DropGun_Stats[ExpList[i]][1][:])
+        AreaFraction21=AreaFraction2/AreaFraction1
+        plt.plot(Zd,AreaFraction21,marker='+',markersize=5,linestyle='None',color='red')
     
-    #plt.ylabel('Area '+High+'% / Area '+Medium+'%')
-    plt.ylabel('A$_{'+High+' - 100}$ / A$_{'+Medium+' - '+ High+'}$')
+    plt.ylabel('Area 75% / Area 50%')
     plt.xlim((-10,10))
     plt.grid(True)
     
@@ -1752,20 +1603,18 @@ def DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, Actua
         AreaFraction1=np.array(Model_Stats[ModelList[i]][1][:])
         AreaFraction0=np.array(Model_Stats[ModelList[i]][2][:])
         AreaFraction10=AreaFraction1/AreaFraction0
-        plt.plot(Zd,AreaFraction10,marker='o',markersize=2,linestyle='None',color='gray')
+        plt.plot(Zd,AreaFraction10,marker='o',markersize=2,linestyle='None',color='black')
     
-    if IncludeDropGun == 1 :
-        for i in range(len(ExpList)):
-            ActualDiameter=ActualDiameterList[i]
-            Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
-            AreaFraction1=np.array(DropGun_Stats[ExpList[i]][1][:])
-            AreaFraction0=np.array(DropGun_Stats[ExpList[i]][2][:])
-            AreaFraction10=AreaFraction1/AreaFraction0
-            plt.plot(Zd,AreaFraction10,marker='+',markersize=5,linestyle='None',color='red')
+    for i in range(len(ExpList)):
+        ActualDiameter=ActualDiameterList[i]
+        Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
+        AreaFraction1=np.array(DropGun_Stats[ExpList[i]][1][:])
+        AreaFraction0=np.array(DropGun_Stats[ExpList[i]][2][:])
+        AreaFraction10=AreaFraction1/AreaFraction0
+        plt.plot(Zd,AreaFraction10,marker='+',markersize=5,linestyle='None',color='red')
     
     
-    #plt.ylabel('Area '+Medium+'% / Area '+Low+'%')
-    plt.ylabel('A$_{'+Medium+' - '+ High+'}$ / A$_{'+Low+' - '+ Medium+'}$')
+    plt.ylabel('Area 50% / Area 25%')
     plt.xlim((-10,10))
     plt.grid(True)
     
@@ -1780,22 +1629,21 @@ def DropGunModel_AF_Zd_2(DropGun_Stats,Model_Stats,IncludeDropGun,ExpList, Actua
         AreaFraction20=AreaFraction2/AreaFraction0      
         Exp=ModelList[i]+', D0 = '+str(ModelDiameterList[i])+' μm'
         #Size='D0 = '+str(ActualDiameterList[i])+' μm'
-        plt.plot(Zd,AreaFraction20, label=Exp,marker='o',markersize=2,linestyle='None',color='gray')
+        plt.plot(Zd,AreaFraction20, label=Exp,marker='o',markersize=2,linestyle='None',color='black')
     
-    if IncludeDropGun == 1 :
-        for i in range(len(ExpList)):
-            ActualDiameter=ActualDiameterList[i]
-            Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
-            AreaFraction2=np.array(DropGun_Stats[ExpList[i]][0][:])
-            AreaFraction0=np.array(DropGun_Stats[ExpList[i]][2][:])
-            AreaFraction20= AreaFraction2 / AreaFraction0
-            plt.plot(Zd,AreaFraction20,marker='+',markersize=5,linestyle='None',color='red')
+    
+    for i in range(len(ExpList)):
+        ActualDiameter=ActualDiameterList[i]
+        Zd=DimensionlessDistance(DropGun_Stats[ExpList[i]][6][:],ActualDiameter,CentreOfDOF_DG)
+        AreaFraction2=np.array(DropGun_Stats[ExpList[i]][0][:])
+        AreaFraction0=np.array(DropGun_Stats[ExpList[i]][2][:])
+        AreaFraction20= AreaFraction2 / AreaFraction0
+        plt.plot(Zd,AreaFraction20,marker='+',markersize=5,linestyle='None',color='red')
 
     #plt.legend()
-    #plt.ylabel('Area '+High+'% / Area '+Low+'%')
-    plt.ylabel('A$_{'+High+' - 100}$ / A$_{'+Low+' - '+ Medium+'}$')
+    plt.ylabel('Area 75% / Area 25%')
     plt.xlim((-10,10))
-    plt.xlabel('Z$_{d}$')
+    plt.xlabel('Zd')
     plt.grid(True)
     #Figurename=FilePath+'AF_Zd_DG_2'
     #plt.savefig(Figurename,dpi=200)
@@ -1910,7 +1758,7 @@ def AllAreaFractionZd_2(DropGun_Stats,SaveFig):
     #plt.ylim((-0.05,1.05))
 
     
-    plt.xlabel('Z$_{d}$')
+    plt.xlabel('Zd')
     #plt.xlim((1,5))
     plt.grid(True)
     
@@ -1968,7 +1816,7 @@ def KorolevCorr_vs_Zd(DropGun_Stats,SaveFlag):
         plt.plot(Zd,D_Level1,marker='o',markersize=2,linestyle='None')
     
     plt.ylabel('Diameter level >=1, μm')
-    plt.xlabel('Z$_{d}$')
+    plt.xlabel('Zd')
     #plt.ylim((-0.05,1.05))
     plt.grid(True)
 
@@ -1983,13 +1831,13 @@ def KorolevCorr_vs_Zd(DropGun_Stats,SaveFlag):
     
 # Use area fraction to calculate Zd
 
-def AF_to_Zd(Model_Stats,FilePath,SaveFlag):     
+def AF_2_Zd(Model_Stats,SaveFlag):     
     
     Zd = []
     Ratio_2_0 = []  
     Ratio_1_0 = []
     
-    CentreOfDOF_Model=50
+    CentreOfDOF_Model=20
     for D0 in range(50,155,5):      
         TmpZd = DimensionlessDistance(Model_Stats[str(D0)][6][:],D0,CentreOfDOF_Model)
         AreaFraction2=np.array(Model_Stats[str(D0)][0][:])
@@ -2005,7 +1853,7 @@ def AF_to_Zd(Model_Stats,FilePath,SaveFlag):
     #Ratio_2_0=(np.where((Zd<0) | (Zd>5), np.nan, Ratio_2_0))
     #Ratio_1_0=(np.where((Zd<3.5) , np.nan, Ratio_1_0))
     
-    Ratio_1_0=(np.where( (Zd<2) | (Ratio_2_0>0) | (Ratio_1_0 == 0) , np.nan, Ratio_1_0))
+    Ratio_1_0=(np.where( (Zd<2) | (Ratio_2_0>0) , np.nan, Ratio_1_0))
     
     
     #Zd = (np.where((Zd<0) | (Zd>5), np.nan, Zd))
@@ -2021,26 +1869,21 @@ def AF_to_Zd(Model_Stats,FilePath,SaveFlag):
     p = np.polyfit(Zd[idx], Ratio_1_0[idx], 1)
     Fit_Ratio_1_0 = p[0] * Zd + p[1] # linear fit 
     
-    print('pearsonr')
-    print(pearsonr(Zd[idx], Ratio_1_0[idx]))
-    
-    #plt.rcParams.update({'font.size': 12})
-    
     fig, ax = plt.subplots()
     plt.plot(Zd[idx],Ratio_1_0[idx],'o')
     #plt.xscale('log')
     plt.plot(Zd[idx],Fit_Ratio_1_0[idx],color='black')
     plt.grid(True)
-    plt.ylabel('A$_{50 - 75}$ / $A_{25 - 50}$')
-    plt.xlabel('Z$_{d}$')   
+    plt.ylabel('Level 1 / Level 0')
+    plt.xlabel('Zd')   
     textstr = 'y = '+ str(round(p[0],4))+'x + '+str(round(p[1],4))
-    props = dict(boxstyle='square', facecolor='white', alpha=0.5)
-    #props = dict(boxstyle='square', alpha=0.5)
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+    #props = dict(boxstyle='round', alpha=0.5)
     plt.text(0.95, 0.95, textstr, transform=ax.transAxes, fontsize=14,
         verticalalignment='top',horizontalalignment='right', bbox=props)
 
     if SaveFlag == 1 : 
-        #FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'
+        FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP/'
         Figurename=FilePath+'Ratio_1_0_Zd'  
         plt.savefig(Figurename,dpi=200)
         plt.close(fig)
@@ -2111,7 +1954,7 @@ def Level2_2_Zd(Model_Stats,SaveFlag):
     plt.subplot(2, 1, 2, sharex=ax1) 
     plt.plot(Zd,VoidRatio,'o')
     plt.ylabel('Void Area / Filled Area')
-    plt.xlabel('Z$_{d}$')  
+    plt.xlabel('Zd')  
 
     plt.ylim((0,0.2))
     plt.xlim((0,2))
@@ -2335,7 +2178,7 @@ def Model_Diameter_Percentiles(ParticleStatsWv,ActualDiameterAll,StageXAll):
         ParticleStatsTmp=ParticleStatsWv[np.where(ActualDiameterAll==D0),:] 
         ParticleStatsExp=ParticleStatsTmp[0,:,:]
         Particle_X=StageXAll[np.where(ActualDiameterAll==D0)]
-        AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea, VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_X, ParticleStatsExp,0,255075)
+        AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea, VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_X, ParticleStatsExp,0)
         D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
                 
         D_ReuterBakan=ReuterBakanDiameter(DiameterLevel0,AreaFraction0)
@@ -2343,7 +2186,7 @@ def Model_Diameter_Percentiles(ParticleStatsWv,ActualDiameterAll,StageXAll):
         #PlotKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,Figurename,'D0='+str(D0)+' μm',D0,20)
         
         #Model_D_Percentiles[str(D0)]=PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,D0,20)
-        Tmp=np.asarray(PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,D0,50))
+        Tmp=np.asarray(PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,D0,20))
         #Output= np.append(Output,Tmp)
         
         if D0 == 50:
@@ -2372,7 +2215,7 @@ def PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,Diameter, Part
     Lambda = 0.658
     Dof_lawson_c6= Dof_lawson(ActualDiameter,Lambda,6) / 2 # Note divide by 2
     
-    D_ReuterBakan_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_ReuterBakan,Particle_Y,0,100,100)
+    D_ReuterBakan_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_ReuterBakan,Particle_Y,0,50,50)
     D_ReuterBakan_binMedian=np.nanmedian(D_ReuterBakan_bin,axis=0)
     
     D_ReuterBakan_median=np.nanmedian(D_ReuterBakan_binMedian)
@@ -2385,7 +2228,7 @@ def PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,Diameter, Part
     D_ReuterBakan_c6_75=np.nanpercentile(D_ReuterBakan_bin_c6,75)
 
 
-    D_KorolevCorr_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_KorolevCorr,Particle_Y,0,100,100)
+    D_KorolevCorr_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_KorolevCorr,Particle_Y,0,50,50)
     D_KorolevCorr_binMedian=np.nanmedian(D_KorolevCorr_bin,axis=0)
     D_Korolev_median=np.nanmedian(D_KorolevCorr_binMedian)
     D_Korolev_25=np.nanpercentile(D_KorolevCorr_binMedian,25)
@@ -2396,7 +2239,7 @@ def PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,Diameter, Part
     D_Korolev_c6_25=np.nanpercentile(D_KorolevCorr_bin_c6,25)
     D_Korolev_c6_75=np.nanpercentile(D_KorolevCorr_bin_c6,75)
 
-    Diameter_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(Diameter,Particle_Y,0,100,100)
+    Diameter_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(Diameter,Particle_Y,0,50,50)
     Diameter_binMedian=np.nanmedian(Diameter_bin,axis=0)
     D_median=np.nanmedian(Diameter_binMedian)
     D_25=np.nanpercentile(Diameter_binMedian,25)
@@ -2408,8 +2251,6 @@ def PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,Diameter, Part
     D_c6_25=np.nanpercentile(Diameter_bin_c6,25)
     D_c6_75=np.nanpercentile(Diameter_bin_c6,75)
 
-
-    #plt.hist(Diameter_bin_c6, bins=20, range=(90,160))
 
     return D_ReuterBakan_median, D_ReuterBakan_25,D_ReuterBakan_75, \
         D_ReuterBakan_c6_median,D_ReuterBakan_c6_25,D_ReuterBakan_c6_75, \
@@ -2528,73 +2369,49 @@ def Model_Dropgun_Diameter_6panel():
     #***************** March 2018 ********************
 
     #60um_25_50_75_run2
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/20180327143000/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/'
-    #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
-    #PltTitle='60um_25_50_75_run2'
-    #ActualDiameter=65
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/20180327143000/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/60um_25_50_75_run2/'
+    ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP
+    PltTitle='60um_25_50_75_run2'
+    ActualDiameter=65
 
     #90um_25_50_75_run2
     #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_25_50_75_run2/20180326150258/Output/'
     #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/90um_25_50_75_run2/'
     #ExpDate= datetime.datetime(2018, 3, 26, 1, 0, 0) #1 hour time difference between stage and CIP
     #PltTitle='90um_25_50_75_run2'
-    #ActualDiameter=85
+    #ActualDiameter=90
 
     #120um_25_50_75_run2
     #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/20180327100000/Output/'
     #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/March2018/120um_25_50_75_run2/'
     #ExpDate= datetime.datetime(2018, 3, 27, 1, 0, 0) #1 hour time difference between stage and CIP   
     #PltTitle='120um_25_50_75_run2'
-    #ActualDiameter=100
-
-    #***************** September 2018 ********************
-
-    #60um_25_50_75
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/20180927111105/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/'
-    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    PltTitle='60um_25_50_75'
-    ActualDiameter=55
-
-    #90um_25_50_75
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/20180927134617/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/'
-    #ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    #PltTitle='90um_25_50_75'
-    #ActualDiameter=80    
-
-    #120um_25_50_75
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/Both/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/'
-    #ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    #PltTitle='120um_25_50_75'
-    #ActualDiameter=90
+    #ActualDiameter=105
 
 
 
     StageFile='StagePositions_exp001.csv'       
     Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
+    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0)
     D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
     D_ReuterBakan=ReuterBakanDiameter(DiameterLevel0,AreaFraction0)
     fig=plt.figure(figsize=(10,10))
     plt.rcParams.update({'font.size': 12}) 
-    PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,ActualDiameter,29.5, 1)
+    PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,ActualDiameter,22, 1)
 
 
     #***************** Model ********************
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'
-    ModelStatsWv,ActualDiameterAll,ModelXAll=LoadModelGrayScale(GSpath)
+    ModelStatsWv,ActualDiameterAll,ModelXAll=LoadModelGrayScale()
     ModelStatsTmp=ModelStatsWv[np.where(ActualDiameterAll==ActualDiameter),:] 
     ModelStatsExp=ModelStatsTmp[0,:,:]
     Model_X=ModelXAll[np.where(ActualDiameterAll==ActualDiameter)]
-    ModelAreaFraction0,ModelAreaFraction1,ModelAreaFraction2,ModelAreaRatio_2_1,ModelAreaRatio_1_0,ModelDiameterLevel0,ModelDiameterLevel1,ModelDiameterLevel2, ModelFilledArea, ModelVoidArea,ModelDiameterBG,ModelZd_fromRatios=GrayscaleRatios(Model_X, Model_X, ModelStatsExp,0,255075)
+    ModelAreaFraction0,ModelAreaFraction1,ModelAreaFraction2,ModelAreaRatio_2_1,ModelAreaRatio_1_0,ModelDiameterLevel0,ModelDiameterLevel1,ModelDiameterLevel2, ModelFilledArea, ModelVoidArea,ModelDiameterBG,ModelZd_fromRatios=GrayscaleRatios(Model_X, Model_X, ModelStatsExp,0)
     ModelD_KorolevCorr=KorolevCorrectedD(ModelFilledArea, ModelVoidArea,ModelDiameterLevel1)
     ModelD_ReuterBakan=ReuterBakanDiameter(ModelDiameterLevel0,ModelAreaFraction0)
-    PlotDiameter6Panel(ModelD_ReuterBakan, ModelD_KorolevCorr,ModelDiameterLevel1, Model_X,ActualDiameter,50, 2)
+    PlotDiameter6Panel(ModelD_ReuterBakan, ModelD_KorolevCorr,ModelDiameterLevel1, Model_X,ActualDiameter,20, 2)
 
-    Figurename='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'+PltTitle+'_Dcorrections'
+    Figurename='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP/'+PltTitle+'_Dcorrections'
 
     plt.savefig(Figurename,dpi=200)
     plt.close(fig)  
@@ -2621,79 +2438,65 @@ def PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,Diameter, Particle_Y,ActualD
     Z=Particle_Y#-Y_centre
 
     ax1=plt.subplot(3, 2, Strip)
-    Diameter_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(Diameter,Z,0,100,100)       
+    Diameter_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(Diameter,Z,0,50,50)       
     BinsMid-=Y_centre
     mask = ~np.isnan(Diameter_bin) # remove nans
     filtered_data = [d[m] for d, m in zip(Diameter_bin.T, mask.T)]
     plt.boxplot(filtered_data,whis=[10,90],showfliers=False,positions=BinsMid)
     means = [np.nanmean(x) for x in filtered_data]
     #Sdev=[np.std(x) for x in filtered_data]
-    #plt.plot(BinsMid, means,"o", color='black', markersize=3)
+    plt.plot(BinsMid, means,"o", color='black', markersize=3)
     plt.axvline(x=Dof_lawson_c6_st, color='b', linestyle='-',label='c=6')
     plt.axvline(x=Dof_lawson_c6_end, color='b', linestyle='-')
     plt.axvline(x=Dof_lawson_c8_st, color='g', linestyle='-',label='c=8')
     plt.axvline(x=Dof_lawson_c8_end, color='g', linestyle='-')
-    plt.axhline(y=ActualDiameter, color='r', linestyle=':')
-    
     plt.ylabel('Diameter, μm')    
     plt.gca().yaxis.grid(True)
-    plt.gca().set_ylim([0, 150])
+    plt.gca().set_ylim([0, 200])
     
     if Strip == 1 : 
-        plt.title('Drop generator')
-        #plt.axhspan(ymin=0, ymax=200, xmin=-50, xmax=-28.9, facecolor='gray')
-        plt.axvspan(-50, -29.5, alpha=0.5, color='grey')
-        plt.axvspan(15.5, 50, alpha=0.5, color='grey')
+        plt.title('Drop gun')
     else:
         plt.title('Model')
         plt.legend()
     
     plt.subplot(3, 2, Strip+2, sharex=ax1) 
-    D_ReuterBakan_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_ReuterBakan,Z,0,100,100)
+    D_ReuterBakan_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_ReuterBakan,Z,0,50,50)
     BinsMid-=Y_centre
     mask = ~np.isnan(D_ReuterBakan_bin) # remove nans
     filtered_data = [d[m] for d, m in zip(D_ReuterBakan_bin.T, mask.T)]
     plt.boxplot(filtered_data,whis=[10,90],showfliers=False,positions=BinsMid)
     means = [np.nanmean(x) for x in filtered_data]
     #Sdev=[np.std(x) for x in filtered_data]
-    #plt.plot(BinsMid, means,"o", color='black', markersize=3)
+    plt.plot(BinsMid, means,"o", color='black', markersize=3)
     plt.axvline(x=Dof_lawson_c6_st, color='b', linestyle='-')
     plt.axvline(x=Dof_lawson_c6_end, color='b', linestyle='-')
     plt.axvline(x=Dof_lawson_c8_st, color='g', linestyle='-')
     plt.axvline(x=Dof_lawson_c8_end, color='g', linestyle='-')
-    plt.axhline(y=ActualDiameter, color='r', linestyle=':')
-    plt.gca().set_ylim([0, 150])
+    plt.gca().set_ylim([0, 200])
     plt.gca().yaxis.grid(True)
     #plt.legend()
-    plt.ylabel('Diameter (RB98), μm')
-    if Strip == 1 : 
-        plt.axvspan(-50, -29.5, alpha=0.5, color='grey')
-        plt.axvspan(15.5, 50, alpha=0.5, color='grey')
-    
+    plt.ylabel('Diameter (Reuter & Bakan), μm')
   
     
     plt.subplot(3, 2, Strip+4, sharex=ax1) 
-    D_KorolevCorr_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_KorolevCorr,Z,0,100,100)       
+    D_KorolevCorr_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_KorolevCorr,Z,0,50,50)       
     BinsMid-=Y_centre
     mask = ~np.isnan(D_KorolevCorr_bin) # remove nans
     filtered_data = [d[m] for d, m in zip(D_KorolevCorr_bin.T, mask.T)]
     plt.boxplot(filtered_data,whis=[10,90],showfliers=False,positions=BinsMid)
     means = [np.nanmean(x) for x in filtered_data]
     #Sdev=[np.std(x) for x in filtered_data]
-    #plt.plot(BinsMid, means,"o", color='black', markersize=3)
+    plt.plot(BinsMid, means,"o", color='black', markersize=3)
     plt.axvline(x=Dof_lawson_c6_st, color='b', linestyle='-')
     plt.axvline(x=Dof_lawson_c6_end, color='b', linestyle='-')
     plt.axvline(x=Dof_lawson_c8_st, color='g', linestyle='-')
     plt.axvline(x=Dof_lawson_c8_end, color='g', linestyle='-')
-    plt.axhline(y=ActualDiameter, color='r', linestyle=':')
-    plt.ylabel('Diameter (K07), μm')
+    plt.ylabel('Diameter (Korolev), μm')
     plt.xlabel('Distance from object plane, mm')
-    plt.gca().set_ylim([0, 150])
-    plt.gca().set_xlim([-39, 39]) 
+    plt.gca().set_ylim([0, 200])
+    plt.gca().set_xlim([-26, 26]) 
     plt.gca().yaxis.grid(True)
-    if Strip == 1 : 
-        plt.axvspan(-50, -29.5, alpha=0.5, color='grey')
-        plt.axvspan(15.5, 50, alpha=0.5, color='grey')
     
     majorLocator = MultipleLocator(10)
     majorFormatter = FormatStrFormatter('%d')
@@ -2705,260 +2508,6 @@ def PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,Diameter, Particle_Y,ActualD
     #plt.savefig(Figurename,dpi=200)
     #plt.close(fig)   
 
-#_______________________________________________________________________________________
- 
-    
- #AF_Level2_avg, AF_Level1_avg, AF_Level0_avg, D_Level2_avg, D_Level1_avg, D_Level0_avg, BinCentre    
-    
-def D25_D0(Model_Stats):
-    
-
-    i=0
-    CentreOfDOF_Model = 50 
-    for i in range(50,155,5):
-        ActualDiameter=i
-        Zd=DimensionlessDistance(Model_Stats[str(i)][6][:],ActualDiameter,CentreOfDOF_Model)
-        D25=np.array(Model_Stats[str(i)][5][:])    
-        D25_D0_ratio = D25 / ActualDiameter
-        plt.plot(Zd,D25_D0_ratio,'o',markersize=2,linestyle='None',color='black')
-
-#_________________________________________________________________________________________
-    
-# Remove particles without 67% pixels
-
-    
-def Model_67grayscale():
-    
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255067/'
-    ParticleStatsWv,ActualDiameterAll,StageXAll=LoadModelGrayScale(GSpath)
-        
-    
-    Y_centre=50
-    
-    
-    
-    Model_D= np.linspace(50,150,21)
-    #Output=[]
-    
-    #for D0 in range(50,155,5):
-    for D0 in Model_D : 
-        
-        Lambda = 0.658
-        Dof_lawson_c6= Dof_lawson(D0,Lambda,6)
-        Dof_lawson_c6_st=-1*(Dof_lawson_c6/2)
-        Dof_lawson_c6_end=(Dof_lawson_c6/2)   
-        Dof_lawson_c48= Dof_lawson(D0,Lambda,4.8)
-        Dof_lawson_c48_st=-1*(Dof_lawson_c48/2)
-        Dof_lawson_c48_end=(Dof_lawson_c48/2) 
-                
-        #D0=50
-        ParticleStatsTmp=ParticleStatsWv[np.where(ActualDiameterAll==D0),:] 
-        ParticleStatsExp=ParticleStatsTmp[0,:,:]
-        Particle_X=StageXAll[np.where(ActualDiameterAll==D0)]
-        AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea, VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_X, ParticleStatsExp,0,255067)
-        D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-        
-        D_KorolevCorr=np.where(AreaFraction2>0,D_KorolevCorr,np.nan)
-        DiameterLevel1=np.where(AreaFraction2>0,DiameterLevel1,np.nan)
-    
-    
-        fig=plt.figure(figsize=(10,10))
-        plt.rcParams.update({'font.size': 14})
-        ax1=plt.subplot(2, 1, 1)
-        Diameter_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(DiameterLevel1,Particle_X,0,100,100)       
-        BinsMid-=Y_centre
-        mask = ~np.isnan(Diameter_bin) # remove nans
-        filtered_data = [d[m] for d, m in zip(Diameter_bin.T, mask.T)]
-        plt.boxplot(filtered_data,whis=[10,90],showfliers=False,positions=BinsMid)
-        means = [np.nanmean(x) for x in filtered_data]
-        #plt.plot(BinsMid, means,"o", color='black', markersize=3)
-        plt.axvline(x=Dof_lawson_c6_st, color='b', linestyle='-',label='c=6')
-        plt.axvline(x=Dof_lawson_c6_end, color='b', linestyle='-')
-        plt.axvline(x=Dof_lawson_c48_st, color='g', linestyle='-',label='c=4.8')
-        plt.axvline(x=Dof_lawson_c48_end, color='g', linestyle='-')
-        plt.ylabel('Diameter, μm')    
-        plt.gca().yaxis.grid(True)
-        plt.gca().set_ylim([0, 200])
-        plt.legend()
-        
-        
-        plt.subplot(2, 1, 2, sharex=ax1) 
-        D_KorolevCorr_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_KorolevCorr,Particle_X,0,100,100)
-        BinsMid-=Y_centre
-        mask = ~np.isnan(D_KorolevCorr_bin) # remove nans
-        filtered_data = [d[m] for d, m in zip(D_KorolevCorr_bin.T, mask.T)]
-        plt.boxplot(filtered_data,whis=[10,90],showfliers=False,positions=BinsMid)
-        means = [np.nanmean(x) for x in filtered_data]
-        #plt.plot(BinsMid, means,"o", color='black', markersize=3)
-        plt.axvline(x=Dof_lawson_c6_st, color='b', linestyle='-')
-        plt.axvline(x=Dof_lawson_c6_end, color='b', linestyle='-')
-        plt.axvline(x=Dof_lawson_c48_st, color='g', linestyle='-')
-        plt.axvline(x=Dof_lawson_c48_end, color='g', linestyle='-')
-        plt.gca().set_ylim([0, 200])
-        plt.gca().yaxis.grid(True)
-        #plt.legend()
-        plt.ylabel('Diameter (Korolev), μm')
-        plt.xlabel('Distance from object plane, mm')
-        
-        plt.gca().set_xlim([-50, 50]) 
-        plt.gca().yaxis.grid(True)
-    
-        majorLocator = MultipleLocator(10)
-        majorFormatter = FormatStrFormatter('%d')
-        minorLocator = MultipleLocator(5)
-        plt.gca().xaxis.set_major_locator(majorLocator)
-        plt.gca().xaxis.set_major_formatter(majorFormatter)
-        plt.gca().xaxis.set_minor_locator(minorLocator)# for the minor ticks, use no labels; default NullFormatter
-        
-        
-        Figurename= GSpath+str(int(D0))+'um.png'
-        plt.savefig(Figurename,dpi=200)
-        plt.close(fig) 
 
 
-#_________________________________________________________________________________________
 
-def Dropgun_67_pdf():
-    StageFile='StagePositions_exp001.csv'
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255067/20180927120501/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255067/'
-    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    DLow_D0_Zd_Table= 'C:/Users/Admin TEMP/Documents/DropletGun/D40_D0_Zd.hdf5' # just use this one not too important
-    DLow_D0_model, Zd_model=Get_DLow_D0_model(DLow_D0_Zd_Table) 
-    SizeBinsEdge=np.linspace(7.5,967.5,num=129)
-    SizeBinsMid= (SizeBinsEdge[0:-1:1]+SizeBinsEdge[1::1])/2
-    Lambda = 0.658	# in um 
-    Lambda_mm=  Lambda / 1000
-    
-    Svol_noThresh=np.zeros(len(SizeBinsMid))
-    Svol_67=np.zeros(len(SizeBinsMid))
-    for i in range(len(SizeBinsMid)):
-        #sVol_EAW_INT(TAS,D0,c,ArrayElements,ProbeRes,Lambda_mm, ArmSep, DLow_D0_model, Zd_model)    
-        Svol_noThresh[i]=sVol_EAW_INT(1,SizeBinsMid[i],8,64,15,Lambda_mm, 70, DLow_D0_model, Zd_model)
-        Svol_67[i]=sVol_EAW_INT(1,SizeBinsMid[i],4.8,64,15,Lambda_mm, 70, DLow_D0_model, Zd_model)
-    
-    
-    D_noNan = D_KorolevCorr[~np.isnan(D_KorolevCorr)] # remove nans
-    #D_noNan = DiameterLevel1[~np.isnan(DiameterLevel1)] # remove nans
-    
-    D_hist, notused=np.histogram(D_noNan, bins=SizeBinsEdge) 
-    #D_hist= D_hist/ np.nansum(D_hist)
-    
-    D_hist= D_hist/(Svol_noThresh*7.5*398) # 398s is length of scan
-    #plt.plot(SizeBinsMid, D_hist,'o-')
-    plt.bar(SizeBinsMid, D_hist, width=7.5, label='No threshold', color='grey')
-    
-    D_67= np.where(AreaFraction2 > 0, D_KorolevCorr, np.nan)
-    #D_67= np.where(AreaFraction2 > 0, DiameterLevel1, np.nan)
-    
-    D_67_noNan = D_67[~np.isnan(D_67)] 
-    D_hist, notused=np.histogram(D_67_noNan, bins=SizeBinsEdge) 
-    #D_hist= D_hist/ np.nansum(D_hist)
-    D_hist= D_hist/(Svol_67*7.5*398) # 398s is length of scan
-    plt.plot(SizeBinsMid, D_hist,'ro-',label='67% threshold')
-    plt.legend()
-    
-    plt.xlim([0,200])
-    plt.xlabel('Diameter (K07), μm')
-    plt.ylabel('dN dDp$^{-1}$, L$^{-1}$ μm$^{-1}$')
-    Figurename= StagePath+'Pdf_67threshold.png'
-    plt.savefig(Figurename,dpi=200)
-    #plt.close(fig) 
-    
-#_________________________________________________________________________________________
-
-def BatchPlot_Dropgun_PSD():
-    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    #FilePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'
-    #ParticleStatsWv,ActualDiameterAll,StageXAll=LoadModelGrayScale(FilePath)
-    #Model_Stats=ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll)
-    
-    
-    fig=plt.figure(figsize=(7,10))
-    plt.rcParams.update({'font.size': 12})
-    #plt.subplot(2, 2, 1)
-    #AF_to_Zd(Model_Stats,FilePath,0)
-    
-    
-    plt.subplot(3, 1, 1)
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/20180927111105/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/'
-    Dropgun_PSD(ExpDate,GSpath, StagePath, 1)
-    
-    plt.subplot(3, 1, 2)
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/20180927134617/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/'
-    Dropgun_PSD(ExpDate,GSpath, StagePath, 0)
-    
-    plt.subplot(3, 1, 3)
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/Both/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/'
-    Dropgun_PSD(ExpDate,GSpath, StagePath, 2)
-    
-    Figurename= 'C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/DropgunPSD_255075.png'
-    plt.savefig(Figurename,dpi=200)
-
-#_________________________________________________________________________________________
-
-
-# Make size distribution of dropgun scan
-
-def Dropgun_PSD(ExpDate,GSpath, StagePath, LabelFlag):
-    StageFile='StagePositions_exp001.csv'   
-    
-    
-    Particle_X, Particle_Y, PartGrayStatsWv, ParticleTime,ParticleTimesWv=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
-    AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2,FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
-    D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
-    DLow_D0_Zd_Table= 'C:/Users/Admin TEMP/Documents/DropletGun/D25_D0_Zd.hdf5' # 
-    DLow_D0_model, Zd_model=Get_DLow_D0_model(DLow_D0_Zd_Table) 
-    SizeBinsEdge=np.linspace(7.5,967.5,num=129)
-    SizeBinsMid= (SizeBinsEdge[0:-1:1]+SizeBinsEdge[1::1])/2
-    Lambda = 0.658	# in um 
-    Lambda_mm=  Lambda / 1000
-    
-    #Svol_noThresh=np.zeros(len(SizeBinsMid))
-    Svol=np.zeros(len(SizeBinsMid))
-    #for i in range(len(SizeBinsMid)):
-        #sVol_EAW_INT(TAS,D0,c,ArrayElements,ProbeRes,Lambda_mm, ArmSep, DLow_D0_model, Zd_model)    
-   #     Svol_noThresh[i]=sVol_EAW_INT(1,SizeBinsMid[i],8,64,15,Lambda_mm, 70, DLow_D0_model, Zd_model)
-         
-     #means = [np.nanmean(x) for x in filtered_data]
-    
-    for i in range(4,9,1) :
-        D= np.where(Zd_fromRatios < i, D_KorolevCorr, np.nan)
-    #D_67= np.where(AreaFraction2 > 0, DiameterLevel1, np.nan)
-        D_noNan = D[~np.isnan(D)] 
-        D_hist, notused=np.histogram(D_noNan, bins=SizeBinsEdge) 
-    #D_hist= D_hist/ np.nansum(D_hist)
-        Svol = np.array([sVol_EAW_INT(1,SizeBinsMid[x],i,64,15,Lambda_mm, 70, DLow_D0_model, Zd_model) for x in range(len(SizeBinsMid)) ])
-        D_hist= D_hist/(Svol*7.5*398)
-        plt.plot(SizeBinsMid, D_hist,'-',label='Z$_{d}$ < '+str(i))
-    
-    
-    D_noNan = D_KorolevCorr[~np.isnan(D_KorolevCorr)] # remove nans
-    #D_noNan = DiameterLevel1[~np.isnan(DiameterLevel1)] # remove nans
-    D_hist, notused=np.histogram(D_noNan, bins=SizeBinsEdge) 
-    #D_hist= D_hist/ np.nansum(D_hist)
-    Svol = np.array([sVol_EAW_INT(1,SizeBinsMid[x],8,64,15,Lambda_mm, 70, DLow_D0_model, Zd_model) for x in range(len(SizeBinsMid)) ])
-    D_hist= D_hist/(Svol*7.5*398)
-    #plt.plot(SizeBinsMid, D_hist,'-', label='No threshold', color='grey')
-    plt.bar(SizeBinsMid, D_hist, width=7.5, label='No threshold', color='grey')
-    
-    
-    if LabelFlag==1:
-        plt.legend()
-    plt.xlim([0,200])
-    
-    plt.ylabel('dN dDp$^{-1}$, L$^{-1}$ μm$^{-1}$')
-    if LabelFlag == 2 :
-        plt.xlabel('Diameter (K07), μm')
-    
-    #plt.yscale('log')
-    
-    #Figurename= StagePath+'Dropgun_PSD.png'
-    #plt.savefig(Figurename,dpi=200)
-    #plt.close(fig) 
