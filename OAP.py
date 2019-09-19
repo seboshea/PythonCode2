@@ -770,9 +770,7 @@ def ColocateB895():
         EndIdx = IDX_End_CIP100[i]
         dNdD_L_CIP100_avg = np.nanmean(dNdD_L_CIP100[StartIdx:EndIdx][:],axis=0)
         dNdD_L_CIP100_avg[0] =np.nan # Ditch first bin
-        dNdD_L_CIP100_error = dNdD_L_CIP100_avg / (2 * np.sqrt(np.nansum(Counts_PSD_CIP100[StartIdx:EndIdx][:],axis=0)))
-        #plt.errorbar(PSD_SizeMid_CIP100, dNdD_L_CIP100_avg,yerr=(dNdD_L_CIP100_error), capsize=2, label= 'CIP100')
-        
+        dNdD_L_CIP100_error = dNdD_L_CIP100_avg / (2 * np.sqrt(np.nansum(Counts_PSD_CIP100[StartIdx:EndIdx][:],axis=0)))       
         
         StartIdx = IDX_Start[i]
         EndIdx = IDX_End[i] 
