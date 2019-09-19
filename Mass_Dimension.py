@@ -17,7 +17,11 @@ from netCDF4 import Dataset
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import scipy.io as sio
 from scipy import optimize
-from PICASSO_functions import SingleRunPSD,Colocate,LoadRadar, DataPaths,LoadFlightData2Dict, AddRadar2FlightDict
+from PICASSO_functions import SingleRunPSD_v2,Colocate,LoadRadar, DataPaths,LoadFlightData2Dict, AddRadar2FlightDict
+from PICASSO_functions import AvgPSDcompositePSD, CalculateReflectivityIce
+from MyFunctions import CalculateEffectiveDiameter, CalculateVolumeMeanDiameter
+import bisect
+import datetime
 
 #_____________________________________________________________________________________________________
 #mass diameter relationship from brown and francis 1995
@@ -48,24 +52,27 @@ def BrownFrancis(PSD,MidSize):
 
 #Find a and b using fit and optimise methods
 
-def Find_a_b(CSVPath,IWC_avg, Zed_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr):   
+def Find_a_b(IWC_avg, Zed_avg, CompositeSize, Composite_dN):   
     
     
     b_array=np.linspace(1.5,2.5,num=20)
     
     # Find a b using optimize*********************************
-    aOptimise, bOptimise =Minimise_Fb(b_array,IWC_avg,Zed_avg,CompositeSize, Composite_dN)
+    aOptimise, bOptimise =Minimise_Fb(IWC_avg,Zed_avg,CompositeSize, Composite_dN)
 
-    print('Optimise a = '+str(aOptimise))
-    print('Optimise b = '+str(bOptimise))
+    #print('Optimise a = '+str(aOptimise))
+    #print('Optimise b = '+str(bOptimise))
     
     
     # Find a b using fit to b vs log(a) *********************************
-    aFit, bFit = Find_a_b_fit(b_array,CSVPath,IWC_avg, Zed_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr)
+    aFit, bFit = Find_a_b_fit(b_array,IWC_avg, Zed_avg, CompositeSize, Composite_dN)
     
-    print('Fit a = '+str(aFit))
-    print('Fit b = '+str(bFit)) 
     
+    #print('Fit a = '+str(aFit))
+    #print('Fit b = '+str(bFit)) 
+ 
+    
+    return aOptimise, bOptimise, aFit, bFit
 #_____________________________________________________________________________________________________
 
 # Do a monte carlo simulation varying IWC and Z calculating a and b using fitting and optimize methods
@@ -74,7 +81,7 @@ def Find_a_b(CSVPath,IWC_avg, Zed_avg, CompositeSize, Composite_dN, Composite_dN
 def Find_a_b_MonteCarlo(CSVPath,IWC_avg, Zed_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr):
     
     b_array=np.linspace(1.5,2.5,num=20)
-    
+      
     #Zed_avg= Zed_Alt_avg # choose which Z to use
     
     IWCsigma=IWC_avg*0.05
@@ -91,17 +98,17 @@ def Find_a_b_MonteCarlo(CSVPath,IWC_avg, Zed_avg, CompositeSize, Composite_dN, C
         
     for i in range(0,Npts,1):
         aFit_array[i], bFit_array[i] = Find_a_b_fit(b_array,CSVPath,IWC_random[i], Z_random[i], CompositeSize, Composite_dN, Composite_dNdDp,RunStr)        
-        aOpt_array[i], bOpt_array[i] = Minimise_Fb(b_array,IWC_random[i],Z_random[i],CompositeSize, Composite_dN)
+        aOpt_array[i], bOpt_array[i] = Minimise_Fb(IWC_random[i],Z_random[i],CompositeSize, Composite_dN)
       
     return aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random  
         
-    print('test')
+    #print('test')
 
 
 #_____________________________________________________________________________________________________
 
 
-def a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random,RunStr):
+def a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random,RunStr,SaveFlag):
     
     Figurename=RunStr+'_a_b_sensitivity_1000'
     SavePath= 'C:/Users/Admin TEMP/Documents/PICASSO/Flights/ProcessedData/C081/'
@@ -152,8 +159,9 @@ def a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_rand
     #plt.title('b='+str(np.nanmean(bFit_array)))
     plt.text(0.5, 0.9,'b='+str(np.nanmean(bFit_array)), ha='center', va='center', transform=ax4.transAxes)
     
-    plt.savefig(SavePath+Figurename,dpi=200)
-    plt.close(fig)
+    if SaveFlag == 1:    
+        plt.savefig(SavePath+Figurename,dpi=200)
+        plt.close(fig)
     
 
 #_____________________________________________________________________________________________________
@@ -161,7 +169,7 @@ def a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_rand
 # Use a fit to b vs log(a) for IWC and Z to estimate a and b that satify IWC and Z equations
 
 
-def Find_a_b_fit(b_array,CSVPath,IWC_avg, Zed_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr):
+def Find_a_b_fit(b_array,IWC_avg, Zed_avg, CompositeSize, Composite_dN):
     
     # Find a b using fit to b vs log(a)*********************************
     
@@ -185,6 +193,8 @@ def Find_a_b_fit(b_array,CSVPath,IWC_avg, Zed_avg, CompositeSize, Composite_dN, 
     
     if NumberofPlots>0 :
     
+        RunStr='Test'
+        
         b_array,a_array, IWC_sensitivity, Z_sensitivity=IWC_Z_sensitivity_2_ab(CompositeSize, Composite_dN)
         
         plt.figure(figsize=(10,10)) 
@@ -227,6 +237,7 @@ def Find_a_b_fit(b_array,CSVPath,IWC_avg, Zed_avg, CompositeSize, Composite_dN, 
             ResultStr='a='+str(aResult)+', b='+str(bResult)
             plt.text(1E-9,2.5,ResultStr,fontsize=12,ha='right',va='top')
 
+        CSVPath=''
         plt.savefig(CSVPath+RunStr,dpi=200)
         
         plt.show()
@@ -266,69 +277,8 @@ def IWC_Z_sensitivity_2_ab(CompositeSize, Composite_dN):
 
     return b_array,a_array, IWC_sensitivity, Z_sensitivity
 
-#_____________________________________________________________________________________________________
+
     
-#_____________________________________________________________________________________________________
-
-# Calculate ice reflectivity
-
-
-# brown and francis a= 7.38E-11, b = 1.9, D in um, M in g
-#Eq 2 Hogan et al., 2006  
-
-
-def CalculateReflectivityIce(Size, dN_L, a, b):
-    # dN in L-1
-    dN=dN_L*1000 # m-3
-    density_ice= 0.9167/1000			# g mm^-2    
-    radar_scaleF = ( (0.174/0.93) * (36/(math.pi*math.pi*density_ice*density_ice)) )  # g^-2 mm^6	   
-    #Size/= 1E6 # m
-    #SecondMoment= (dN)*Size**2
-    #ForthMoment= (dN)*Size**4
-    #Size*=1E6 #um
-    massVal= np.zeros(len(Size))
-    for i in range(len(Size)):		
-        if(Size[i] >= 100) : 
-            massVal[i]=a*(Size[i]**b)			# g
-        else : 
-            massVal[i]=(4.82E-13)*(Size[i]**3)		# g
-    Radar_ref_array= dN * massVal * massVal		# g^2 m^-3     
-    Radar_ref= 10* math.log (radar_scaleF * np.sum(Radar_ref_array),10)		# Log to the base 10
-    IWC= np.sum(dN* massVal) # g m3
-    #print(Radar_ref) 
-    #print(IWC)    
-    return Radar_ref, IWC
-
-
-#_____________________________________________________________________________________________________
-
-# Calculate reflecivtiy using drop PSD
-
-
-#Mason et al 2017 eq7     
-
-def CalculateReflectivityLiquid(Size_um, dN_L, a, b):
-    # dN in L-1
-    dN=dN_L*1000 # m-3
-    Size= Size_um/1000 # mm
-   
-    
-    #Size/= 1E6 # m
-    #SecondMoment= (dN)*Size**2
-    #ForthMoment= (dN)*Size**4
-    #Size*=1E6 #um
-    
-    MRratio=1 #Mie–Rayleigh backscatter ratio at the radar frequency
-    Radar_ref_array= np.zeros(len(Size))
-    for i in range(len(Size)):		
-            Radar_ref_array[i]=dN*(Size[i]**6)*MRratio  # mm6/m3
-    
-    Radar_ref= 10* math.log (np.sum(Radar_ref_array),10)		# Log to the base 10
-    
-    #print(Radar_ref) 
-    #print(IWC)    
-    return Radar_ref
-
 
 
 #_____________________________________________________________________________________________________
@@ -374,17 +324,18 @@ def Find_a_given_b(b_array,IWC,Z,CompositeSize, Composite_dN):
 # Find minimum in F_b. 
 
 
-def Minimise_Fb(b_array,IWC,Zed,CompositeSize, Composite_dN):
+def Minimise_Fb(IWC,Zed,CompositeSize, Composite_dN):
 
-    # Do optimisation to find b
-    F_b_array = np.zeros(len(b_array))   
-    for i in range(len(b_array)): 
-        F_b_array[i]=F_b(b_array[i],IWC,Zed,CompositeSize, Composite_dN)
+    
+#    F_b_array = np.zeros(len(b_array))   
+#    for i in range(len(b_array)): 
+#        F_b_array[i]=F_b(b_array[i],IWC,Zed,CompositeSize, Composite_dN)
     
     #plt.plot(b_array,F_b_array)
     #plt.xlabel('b')
     #plt.ylabel('F(b)')
     
+    # Do optimisation to find b
     b=2
     b_opt=optimize.minimize(F_b, b, args=(IWC,Zed,CompositeSize, Composite_dN),method='Nelder-Mead')
     b=b_opt['x']
@@ -419,13 +370,13 @@ def F_b(b, IWC,Zed,CompositeSize, Composite_dN):
 
     Part2 = Reflectivity / radar_scaleF
     
-    TempD=(np.where(CompositeSize<100,(4E-13*CompositeSize**3)**2*dN_m3, np.nan ))
+    TempD=(np.where(CompositeSize<100,dN_m3*((4E-13*CompositeSize**3)**2), np.nan ))
     Part3=np.nansum(TempD)
     
     TempD= (np.where(CompositeSize>100,(CompositeSize**(2*b))*dN_m3, np.nan))
     Part4=np.nansum(TempD)
     
-    TempD=(np.where(CompositeSize<100,(4E-13*CompositeSize**3)*dN_m3,np.nan))
+    TempD=(np.where(CompositeSize<100,(4E-13*(CompositeSize**3))*dN_m3,np.nan))
     
     Part5 = np.nansum(TempD) - IWC
  
@@ -439,8 +390,8 @@ def F_b(b, IWC,Zed,CompositeSize, Composite_dN):
 def Calculate_a_b_runs():  
 
     PathDict=DataPaths()
-    FlightDict_C081=LoadFlightData2Dict(1,1,1,'C081',PathDict)
-    AddRadar2FlightDict(FlightDict_C081)
+    FlightDict_C081=LoadFlightData2Dict(1,1,1,1,'C081',PathDict)
+    AddRadar2FlightDict(FlightDict_C081,'C081',PathDict)
 
 
     CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
@@ -449,18 +400,136 @@ def Calculate_a_b_runs():
 
     #Filename='20180213_0552_CAMRA_RHI.nc'
     #Filename='20180213_0652_CAMRA_RHI.nc'
-    Filename='20180213_0734_CAMRA_RHI.nc'
-    RadarData, ZED_H_1D,Distance_1D,Altitude_1D, Range, Elevation=LoadRadar(Filename)
-    Distance2CHB, FlightTrack_ZED_H, LAT, LON, ALT,Time_Core,ZED_H_grid, DistanceBins, AltitudeBins = Colocate(FlightDict_C081,ZED_H_1D,Distance_1D,Altitude_1D,Filename.replace('.nc','.png'))
+    #Filename='20180213_0734_CAMRA_RHI.nc'
+    #RadarData, ZED_H_1D,Distance_1D,Altitude_1D, Range, Elevation=LoadRadar(Filename)
+    #Distance2CHB, FlightTrack_ZED_H, LAT, LON, ALT,Time_Core,ZED_H_grid, DistanceBins, AltitudeBins = Colocate(FlightDict_C081,ZED_H_1D,Distance_1D,Altitude_1D,Filename.replace('.nc','.png'))
 
 
     for i in range(1,14,1):    
-        IWC_avg_colocate, IWC_avg, Zed_Alt_avg, Zed_1D_avg, Zed_colocate_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr= SingleRunPSD(i,FlightDict_C081,FlightTrack_ZED_H,AltitudeBins,ZED_H_grid,CSVPath,CSVName)
-        
+        #IWC_avg_colocate, IWC_avg, Zed_Alt_avg, Zed_1D_avg, Zed_colocate_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr= SingleRunPSD(i,FlightDict_C081,FlightTrack_ZED_H,AltitudeBins,ZED_H_grid,CSVPath,CSVName)
+        IWC_avg_colocate, IWC_avg, Zed_1D_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr = SingleRunPSD_v2(i,FlightDict_C081,CSVPath,CSVName)
         
         if ((IWC_avg==IWC_avg) & (Zed_1D_avg==Zed_1D_avg)):
             #Find_a_b(CSVPath,IWC_avg_colocate, Zed_1D_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr)
             aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random =Find_a_b_MonteCarlo(CSVPath,IWC_avg_colocate, Zed_1D_avg,CompositeSize, Composite_dN, Composite_dNdDp,RunStr)
-            a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random,RunStr)
+            a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random,RunStr,1)
+
+#____________________________________________________________________________________________________
+
+# Calculate a and b using optimise and fit for average along the flight path 
+ 
+def Calculate_a_b_Avg(FlightDict):  
+
+    NumberSeconds=30
+    Output_dNdDp, TimeAvg_mid, CompositeSize, CompositeWidth=AvgPSDcompositePSD(FlightDict,NumberSeconds)
+    #print('Composite size type='+str(type(CompositeSize)))
+    Reflectivity_1Hz=FlightDict['Reflectivity']
+    IWC_g_m3_1Hz=FlightDict['IWC_g_m3']
+    Time_Core_1Hz=FlightDict['Time_Core']
+        
+    Reflectivity_Avg=np.zeros(len(TimeAvg_mid))*np.nan
+    IWC_g_m3_Avg=np.zeros(len(TimeAvg_mid))*np.nan
+        
+    for i in range(len(TimeAvg_mid)) : 
+        StartIdx=bisect.bisect_left(Time_Core_1Hz, TimeAvg_mid[i]- datetime.timedelta(seconds=(NumberSeconds/2))) # assume time is sorted, which it should be 
+        EndIdx=bisect.bisect_left(Time_Core_1Hz, TimeAvg_mid[i]+ datetime.timedelta(seconds=(NumberSeconds/2))) 
+        
+        Reflectivity_Avg[i]=np.nanmean(Reflectivity_1Hz[StartIdx:EndIdx])
+        IWC_g_m3_Avg[i]=np.nanmean(IWC_g_m3_1Hz[StartIdx:EndIdx])
+        
+    
+    aOptimise_array=np.zeros(len(TimeAvg_mid))*np.nan
+    bOptimise_array=np.zeros(len(TimeAvg_mid))*np.nan
+    aFit_array=np.zeros(len(TimeAvg_mid))*np.nan
+    bFit_array=np.zeros(len(TimeAvg_mid))*np.nan
+    EffectiveDiameter=np.zeros(len(TimeAvg_mid))*np.nan
+    VolumeMeanDiameter=np.zeros(len(TimeAvg_mid))*np.nan
+    
+    for i in range(len(TimeAvg_mid)):    
+    #i=423
+    #if i==423 :       
+        if ((Reflectivity_Avg[i]==Reflectivity_Avg[i]) & (IWC_g_m3_Avg[i]==IWC_g_m3_Avg[i])):
+            #Find_a_b(CSVPath,IWC_avg_colocate, Zed_1D_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr)
+            #aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random =Find_a_b_MonteCarlo(CSVPath,IWC_avg_colocate, Zed_1D_avg,CompositeSize, Composite_dN, Composite_dNdDp,RunStr)
+            #a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random,RunStr,1)
+    
+            Composite_dNdDp=np.array(Output_dNdDp[i,:])
+            Composite_dN= CompositeWidth * Composite_dNdDp
+            IWC=IWC_g_m3_Avg[i]
+            Reflectivity=Reflectivity_Avg[i]
+            aOptimise_array[i], bOptimise_array[i], aFit_array[i], bFit_array[i] = Find_a_b(IWC, Reflectivity, CompositeSize, Composite_dN)
+            EffectiveDiameter[i]= CalculateEffectiveDiameter(Composite_dN, CompositeSize)
+            VolumeMeanDiameter[i]=CalculateVolumeMeanDiameter(Composite_dN, CompositeSize)
+            
+
+#        if i==423 : 
+#            Composite_dN_423 = Composite_dN
+#            Composite_Vol=Composite_dN * (np.pi / 6)* CompositeSize**3
+#            CompositeSize_423 = CompositeSize
+#            plt.plot(CompositeSize, Composite_dN)
+#            plt.xscale('log')
+#            plt.yscale('log')
+#            print(EffectiveDiameter[i])
+#            print(VolumeMeanDiameter[i])
+#            print(np.nansum(Composite_Vol)/ np.nansum(Composite_dN))
+#        return Composite_dN_423, CompositeSize_423
+    
+    if 1==1 :
+        fig=plt.figure(figsize=(5,10))
+        plt.subplot(3,1,1)
+        plt.plot(aOptimise_array,bOptimise_array,'o', label='Fit')
+        plt.plot(aFit_array,bFit_array,'+', label='Optimise')
+        plt.ylim([0,7])
+        plt.xlim([1E-30,1E-2])
+        plt.xscale('log')
+        plt.ylabel('b')
+        plt.xlabel('a')
+        plt.legend()
+    
+        plt.subplot(3,1,2)
+        plt.plot(aOptimise_array,EffectiveDiameter,'o', label='Fit')
+        plt.plot(aFit_array,EffectiveDiameter,'+', label='Optimise')
+    #    plt.ylim([0,7])
+        plt.xlim([1E-30,1E-2])
+        plt.xscale('log')
+        plt.ylabel('Effective Diameter, um')
+        plt.xlabel('a')
+    #    plt.legend()  
+    
+        plt.subplot(3,1,3)
+        plt.plot(EffectiveDiameter,VolumeMeanDiameter,'o', label='Fit')
+        #plt.plot(EffectiveDiameter,VolumeMeanDiameter,'+', label='Optimise')
+    #    plt.ylim([0,7])
+        #plt.xlim([1E-30,1E-2])
+        #plt.xscale('log')
+        plt.ylabel('Volume mean diameter, um')
+        plt.xlabel('Effective Diameter, um')
+    
+    
+    return aOptimise_array, bOptimise_array, aFit_array, bFit_array, EffectiveDiameter, VolumeMeanDiameter
 
 
+#____________________________________________________________________________________________________
+#https://www.atmos-chem-phys-discuss.net/acp-2018-795/
+
+def Finlon(IWC, Reflectivity, Size, dN_L):
+    
+    Chi_a_b(IWC, Z, Size, dN_L, a, b)
+     
+     
+     
+#____________________________________________________________________________________________________
+ 
+def Chi_a_b(IWC, Z, Size, dN_L, a, b):
+    
+    Zsd, IWCsd = CalculateReflectivityIce(Size, dN_L, a, b)
+    TWCdiff = ((IWC - IWCsd) / np.sqrt(IWC * IWCsd)) ** 2 
+    Zdiff = ((np.sqrt(Z) - np.sqrt(Zsd)) / np.sqrt (np.sqrt(Z) * np.sqrt(Zsd))) ** 2
+    
+     
+#____________________________________________________________________________________________________
+     
+     
+     
+     
+#____________________________________________________________________________________________________

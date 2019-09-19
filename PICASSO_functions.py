@@ -10,11 +10,11 @@ import numpy as np
 #from netCDF4 import Dataset
 from MyFunctions import ChangeTimeBase2DAvg,ChangeTimeBaseAvg,loadTAS,LoadCoreCloud,loadFAAMCore, DateTime2IgorTime, FindFirstGreaterThan,is_number
 from MyFunctions import Matlab2PythonTimeArray,loadmat,Matlab2PythonTime,BinLinearV2,LoadNevzorov,LoadOAP,round_time, Average_nPts_datetime,Average_nPts,Average_nPts_2D, haversine,BinMid_2_Width,BinAverage2D
-from MyFunctions import LoadOAP_nc
+from MyFunctions import LoadOAP_nc,CalculateEffectiveDiameter, CalculateVolumeMeanDiameter
 import matplotlib.pyplot as plt  
 import matplotlib.dates as mdates
 import matplotlib.colors as colors
-from matplotlib.mlab import bivariate_normal
+#from matplotlib.mlab import bivariate_normal
 from matplotlib.dates import DateFormatter
 import pandas as pd
 from scipy.interpolate import interp1d
@@ -22,12 +22,17 @@ from pylab import figure, cm
 from matplotlib.colors import LogNorm
 import h5py
 import bisect
+os.environ['PROJ_LIB'] = r'C:\Python\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
+#os.environ['PROJ_LIB'] = r'C:\Users\mbexjso2\Anaconda3\pkgs\proj4-5.2.0-ha925a31_1\Library\share'
 from mpl_toolkits.basemap import Basemap
 import math
 from netCDF4 import Dataset
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import scipy.io as sio
 from scipy import optimize
+import csv
+#from Mass_Dimension import CalculateReflectivityIce
+
 
 #_________________________________________________________________________________________________
 
@@ -50,9 +55,7 @@ def DataPaths():
     PathDict['C098','FileName2DS']='UMAN_2DS_20180424_r0_C098.nc'
     #PathDict['C098','FileNameHVPS'] = 'C098_20180424_HVPS_AllIn.h5' 
     PathDict['C098','FileNameHVPS'] = 'UMAN_HVPS_20180424_r0_C098.nc'
-    
-    
-    
+    PathDict['C098','FileNameCIP15']= 'FAAM-CIP15_20180424_r0_C098.nc'
     
     PathDict['C097','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C097','FAAMCoreName']='core_faam_20180423_v004_r0_c097_1hz.nc'
@@ -67,7 +70,8 @@ def DataPaths():
     PathDict['C097','FileName2DS']='UMAN_2DS_20180423_r0_C097.nc'
     #PathDict['C097','FileNameHVPS'] = 'C097_20180423_HVPS_AllIn.h5' 
     PathDict['C097','FileNameHVPS'] = 'UMAN_HVPS_20180423_r0_C097.nc'
-      
+    PathDict['C097','FileNameCIP15']='FAAM-CIP15_20180423_r0_C097.nc'     
+
     PathDict['C082','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C082','FAAMCoreName']='core_faam_20180214_v004_r0_c082_1hz.nc'
     PathDict['C082','CoreCloudPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCoreCloud/'
@@ -81,7 +85,9 @@ def DataPaths():
     PathDict['C082','FileName2DS']='UMAN_2DS_20180214_r0_C082.nc'
     #PathDict['C082','FileNameHVPS'] = 'C082_20180214_HVPS.h5'
     PathDict['C082','FileNameHVPS'] = 'UMAN_HVPS_20180214_r0_C082.nc'
-      
+    PathDict['C082','RadarTimeSeriesPath']='C:/Users/Admin TEMP/Documents/PICASSO/RadarData/C082_TimeSeries/'  
+    PathDict['C082','FileNameCIP15']='FAAM-CIP15_20180423_r0_C097.nc'
+    
     PathDict['C081','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C081','FAAMCoreName']='core_faam_20180213_v004_r0_c081_1hz.nc'
     PathDict['C081','CoreCloudPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCoreCloud/'
@@ -97,9 +103,8 @@ def DataPaths():
     PathDict['C081','FileNameHVPS'] = 'UMAN_HVPS_20180213_r0_C081.nc'
     PathDict['C081','SEA_path']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/SEA/SEAmerge_c081/'
     PathDict['C081','SEA_filename']='seaprobe_core_processed_20180213_c081_MO-Nev.csv'
-    
-    
-    
+    PathDict['C081','RadarTimeSeriesPath']='C:/Users/Admin TEMP/Documents/PICASSO/RadarData/C081_TimeSeries/'
+    PathDict['C081','FileNameCIP15']='FAAM-CIP15_20180213_r0_C081.nc'
     
     PathDict['C080','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C080','FAAMCoreName']='core_faam_20180208_v004_r0_c080_1hz.nc'
@@ -114,6 +119,7 @@ def DataPaths():
     PathDict['C080','FileName2DS']='UMAN_2DS_20180208_r0_C080.nc'
     #PathDict['C080','FileNameHVPS'] = 'C080_20180208_HVPS_AllIn.h5'   
     PathDict['C080','FileNameHVPS'] = 'UMAN_HVPS_20180208_r0_C080.nc'
+    PathDict['C080','FileNameCIP15']='FAAM-CIP15_20180208_r0_C080.nc'
     
     PathDict['C079','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C079','FAAMCoreName']='core_faam_20180208_v004_r0_c079_1hz.nc'
@@ -127,6 +133,7 @@ def DataPaths():
     PathDict['C079','FileName2DS']='UMAN_2DS_20180208_r0_C079.nc'
     #PathDict['C079','FileNameHVPS'] = 'C079_20180208_HVPS_Allin.h5'     
     PathDict['C079','FileNameHVPS'] = 'UMAN_HVPS_20180208_r0_C079.nc'   
+    PathDict['C079','FileNameCIP15']='FAAM-CIP15_20180208_r0_C079.nc'
     
     PathDict['C078','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C078','FAAMCoreName']='core_faam_20180207_v004_r0_c078_1hz.nc'
@@ -139,6 +146,7 @@ def DataPaths():
     PathDict['C078','FilePathOAP']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/ProcessedData/C078/'
     PathDict['C078','FileName2DS']='UMAN_2DS_20180207_r0_C078.nc'
     PathDict['C078','FileNameHVPS'] ='' 
+    PathDict['C078','FileNameCIP15']='FAAM-CIP15_20180207_r0_C078.nc'
     
     PathDict['C077','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C077','FAAMCoreName']='core_faam_20180129_v004_r0_c077_1hz.nc'
@@ -151,6 +159,7 @@ def DataPaths():
     PathDict['C077','FilePathOAP']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/ProcessedData/C077/'
     PathDict['C077','FileName2DS']='UMAN_2DS_20180129_r0_C077.nc'
     PathDict['C077','FileNameHVPS'] = '' 
+    PathDict['C077','FileNameCIP15']='FAAM-CIP15_20180129_r0_C077.nc'
     
     PathDict['C076','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C076','FAAMCoreName']='core_faam_20180124_v004_r0_c076_1hz.nc'
@@ -163,6 +172,7 @@ def DataPaths():
     PathDict['C076','FilePathOAP']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/ProcessedData/C076/'
     PathDict['C076','FileName2DS']='UMAN_2DS_20180124_r0_C076.nc'
     PathDict['C076','FileNameHVPS'] = ''
+    PathDict['C076','FileNameCIP15']='FAAM-CIP15_20180124_r0_C076.nc'
 
     PathDict['C075','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C075','FAAMCoreName']='core_faam_20180123_v004_r0_c075_1hz.nc'
@@ -175,7 +185,8 @@ def DataPaths():
     PathDict['C075','FilePathOAP']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/ProcessedData/C075/'
     PathDict['C075','FileName2DS']='UMAN_2DS_20180123_r0_C075.nc'
     PathDict['C075','FileNameHVPS'] = ''
-     
+    PathDict['C075','FileNameCIP15']='FAAM-CIP15_20180123_r0_C075.nc'
+    
     PathDict['C074','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C074','FAAMCoreName']='core_faam_20180118_v004_r0_c074_1hz.nc'
     PathDict['C074','CoreCloudPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCoreCloud/'
@@ -187,6 +198,7 @@ def DataPaths():
     PathDict['C074','FilePathOAP']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/ProcessedData/C074/'
     PathDict['C074','FileName2DS']='UMAN_2DS_20180118_r0_C074.nc'
     PathDict['C074','FileNameHVPS'] = ''    
+    PathDict['C074','FileNameCIP15']='FAAM-CIP15_20180118_r0_C074.nc'
     
     PathDict['C073','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C073','FAAMCoreName']='core_faam_20180109_v004_r0_c073_1hz.nc'
@@ -199,6 +211,7 @@ def DataPaths():
     PathDict['C073','FilePathOAP']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/ProcessedData/C073/'
     PathDict['C073','FileName2DS']='C073_20180109_2DS_Allin.h5'
     PathDict['C073','FileNameHVPS'] = ''  
+    PathDict['C073','FileNameCIP15']=''
     
     PathDict['C072','FullPath']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'
     PathDict['C072','FAAMCoreName']='core_faam_20171214_v004_r0_c072_1hz.nc'
@@ -211,7 +224,7 @@ def DataPaths():
     PathDict['C072','FilePathOAP']='C:/Users/Admin TEMP/Documents/PICASSO/Flights/ProcessedData/C072/'
     PathDict['C072','FileName2DS']='C072_20171214_2DS_ALLin.h5'
     PathDict['C072','FileNameHVPS'] = '' 
-    
+    PathDict['C072','FileNameCIP15']=''
     
       
     return PathDict
@@ -240,7 +253,7 @@ def PlotFlight(PathDict,FlightList):
 # Create dictionary with all 1hz data on core time base. Option to include psds but there on a different time base
 
 
-def LoadFlightData2Dict(IncSEA,IncHVPS,IncNev,IncPSDs,FlightNumber,PathDict):
+def LoadFlightData2Dict(IncCIP15,IncSEA,IncHVPS,IncNev,IncPSDs,FlightNumber,PathDict):
     
     #Paths 
     FullPath=PathDict[FlightNumber,'FullPath']
@@ -254,6 +267,7 @@ def LoadFlightData2Dict(IncSEA,IncHVPS,IncNev,IncPSDs,FlightNumber,PathDict):
     FilePathOAP=PathDict[FlightNumber,'FilePathOAP']
     FileName2DS=PathDict[FlightNumber,'FileName2DS']
     FileNameHVPS = PathDict[FlightNumber,'FileNameHVPS']
+    FileNameCIP15 = PathDict[FlightNumber,'FileNameCIP15']
     
     # Load core data
     FlightDict=loadFAAMCore(FullPath,FAAMCoreName)
@@ -372,6 +386,40 @@ def LoadFlightData2Dict(IncSEA,IncHVPS,IncNev,IncPSDs,FlightNumber,PathDict):
             FlightDict['Size_mid_HVPS']=Size_mid
             FlightDict['Size_edge_HVPS']=Size_edge
     
+    
+    if IncCIP15 == 1:
+        
+        NC_DateTime, Time_mid, Time_edge, Size_mid, Size_edge, PSD_Num_S, PSD_Num_LI, PSD_Num_MI, PSD_Num_HI, PSD_Num_All =LoadOAP_nc('CIP15',FilePathOAP,FileNameCIP15,0)
+        
+        NC_All=np.sum(PSD_Num_All,axis=1)
+        NC_HI=np.sum(PSD_Num_LI,axis=1)
+        NC_MI=np.sum(PSD_Num_MI,axis=1)
+        NC_LI=np.sum(PSD_Num_HI,axis=1)
+        
+        NC_HI_CIP15=ChangeTimeBaseAvg(NC_DateTime,NC_HI,Time_Core,1)
+        NC_MI_CIP15=ChangeTimeBaseAvg(NC_DateTime,NC_MI,Time_Core,1)
+        NC_LI_CIP15=ChangeTimeBaseAvg(NC_DateTime,NC_LI,Time_Core,1)
+        NC_All_CIP15=ChangeTimeBaseAvg(NC_DateTime,NC_All,Time_Core,1)
+        FlightDict['NC_HI_CIP15']= NC_HI_CIP15
+        FlightDict['NC_MI_CIP15']= NC_MI_CIP15   
+        FlightDict['NC_LI_CIP15']= NC_LI_CIP15 
+        FlightDict['NC_All_CIP15']= NC_All_CIP15
+
+        if IncPSDs==1 :
+            PSD_Num_All_core=ChangeTimeBase2DAvg(NC_DateTime,PSD_Num_All,Time_Core, 1)       
+            PSD_Num_HI_core=ChangeTimeBase2DAvg(NC_DateTime,PSD_Num_HI,Time_Core, 1) 
+            PSD_Num_MI_core=ChangeTimeBase2DAvg(NC_DateTime,PSD_Num_MI,Time_Core, 1) 
+            PSD_Num_LI_core=ChangeTimeBase2DAvg(NC_DateTime,PSD_Num_LI,Time_Core, 1) 
+        
+            FlightDict['PSD_Num_All_CIP15']=PSD_Num_All_core
+            FlightDict['PSD_Num_HI_CIP15']=PSD_Num_HI_core
+            FlightDict['PSD_Num_MI_CIP15']=PSD_Num_MI_core
+            FlightDict['PSD_Num_LI_CIP15']=PSD_Num_LI_core
+            FlightDict['Size_mid_CIP15']=Size_mid
+            FlightDict['Size_edge_CIP15']=Size_edge
+    
+    
+    
     if IncSEA == 1 : 
         SEA_path = PathDict[FlightNumber,'SEA_path']
         SEA_filename = PathDict[FlightNumber,'SEA_filename']
@@ -443,7 +491,7 @@ def LoadFlightSummary(FilePath,FileName):
 def PSD_runs_dict(PathDict, FlightStr,CSVPath,CSVName):
     
     FilePath= PathDict[FlightStr,'FilePathOAP']
-    FlightDict=LoadFlightData2Dict(1,0,1,FlightStr,PathDict)
+    FlightDict=LoadFlightData2Dict(1,0,1,0,1,FlightStr,PathDict)
     #CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
     #CSVName='flight-sum_faam_20180213_r0_c081.csv'
     StartTime, EndTime, RunNumber,ProfileNumber=LoadFlightSummaryCSV(CSVPath,CSVName)
@@ -502,7 +550,7 @@ def PSD_runs():
 
 
 def PSD_comparison_Dict(FlightDict, StartTime,EndTime,FilePath,Figurename,Prefix):            
-
+    FlagCIP15= 1
     
     
     #2DS
@@ -510,6 +558,12 @@ def PSD_comparison_Dict(FlightDict, StartTime,EndTime,FilePath,Figurename,Prefix
     
     #HVPS
     NC_SizeMid_HVPS, NC_z_dNdDp_HVPS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_HVPS', 'Time_Core', Prefix+'_HVPS', StartTime,EndTime,1)
+    
+    
+    if FlagCIP15==1 : 
+        #CIP15
+        NC_SizeMid_CIP15, NC_z_dNdDp_CIP15= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_CIP15', 'Time_Core', Prefix+'_CIP15', StartTime,EndTime,1)
+
     
     #print(np.nanmax(NC_z_dNdDp_HVPS))
        
@@ -537,6 +591,9 @@ def PSD_comparison_Dict(FlightDict, StartTime,EndTime,FilePath,Figurename,Prefix
     plt.title('Temperature DI='+str(TAT_DI_R_avg)+'°C, ND='+ str(TAT_ND_R_avg)+'°C')
     plt.plot(NC_SizeMid_2DS,NC_z_dNdDp_2DS, label='2DS')
     plt.plot(NC_SizeMid_HVPS,NC_z_dNdDp_HVPS, label='HVPS')
+    
+    if FlagCIP15==1 :
+        plt.plot(NC_SizeMid_CIP15,NC_z_dNdDp_CIP15, label='CIP15')
     
     #if ProbeFlag==1 :
     #    plt.plot(NC_SizeMid_CIP100,NC_z_dNdDp_CIP100, label='CIP100')
@@ -648,8 +705,8 @@ def Avg_CDP_dndDp(StartTime,EndTime,CoreCloudPath,CoreCloudFile,CdpCalPath,CdpCa
     StartIdx=bisect.bisect_left(CDP_time_mid, StartTime) # assume time is sorted, which it should be 
     EndIdx=bisect.bisect_left(CDP_time_mid, EndTime) # assume time is sorted, which it should be
 
-    print(StartIdx)
-    print(EndIdx)
+    #print(StartIdx)
+    #print(EndIdx)
 
     CDP_dNdDp_L_avg=np.nanmean(CDP_dNdDp[StartIdx:EndIdx][:],axis=0)
     
@@ -769,10 +826,8 @@ def Avg_OAP_dndDp(StartTime,EndTime,FilePath,FileName,PSD_name):
     return NC_SizeMid, NC_z_dNdDp
 
 #_________________________________________________________________________________________________
-
+    
 # Flag should be same length as TimeOAP. Flag 1 = include 
-
-
 
 def Avg_OAP_dndDp_Dict(FlightDict, SizeName, TimeName, dN_Name, StartTime,EndTime,Flag):            
 
@@ -888,6 +943,7 @@ def BatchLoadTAS():
    # for filena in os.listdir(CorePath):
    #     FullPath=CorePath+filena+'/core_processed/'
     FullPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/AllCore/'    
+    #FullPath='C:/Users/Admin TEMP/Documents/PIKNMIX_2019/FAAM_core/'    
     for filena in os.listdir(FullPath):
         if filena.endswith("1hz.nc"):     
             print(FullPath)
@@ -1443,25 +1499,15 @@ def PlotCrossSections2CHB(FlightDict,SavePath,FlightNumber):
     plt.savefig(SavePath+Figurename,dpi=200)
     plt.close(fig)
 
-
-
-
 #_____________________________________________________________________________________________________
 
 # Ouput combine 2DS and HVPS size distribution for a given run
 
 
-
-#    CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
-#    CSVName='flight-sum_faam_20180213_r0_c081.csv'
-
-
-def SingleRunPSD(RunNumber,FlightDict,FlightTrack_ZED_H,AltitudeBins,ZED_H_grid,CSVPath,CSVName):
+def SingleRunPSD_v2(RunNumber,FlightDict,CSVPath,CSVName):
 
     #Load flight log and choose run number
     StartTime, EndTime, RunNumberArray, ProfileNumber = LoadFlightSummaryCSV(CSVPath,CSVName)
-    
-    #RunNumber=2
     
     tmp=RunNumberArray.tolist()
     i=tmp.index(RunNumber)
@@ -1487,14 +1533,12 @@ def SingleRunPSD(RunNumber,FlightDict,FlightTrack_ZED_H,AltitudeBins,ZED_H_grid,
     Time_Core=FlightDict['Time_Core']
     StartIdx=bisect.bisect_left(Time_Core, StartTime[i]) # assume time is sorted, which it should be 
     EndIdx=bisect.bisect_left(Time_Core, EndTime[i]) # assume time is sorted, which it should be  
-
-    Zed_colocate_avg=np.nanmean(FlightTrack_ZED_H[StartIdx:EndIdx])   
    
     #Prefix='NC_All_accept'    
     #2DS
-    NC_SizeMid_2DS, NC_z_dNdDp_2DS= Avg_OAP_dndDp_Dict(FlightDict, 'NC_2DS_size', 'Time_Core', 'NC_HI_z_2DS_psd', StartTime[i],EndTime[i],RadarFlag)    
+    NC_SizeMid_2DS, NC_z_dNdDp_2DS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_2DS', 'Time_Core', 'PSD_Num_HI_2DS', StartTime[i],EndTime[i],RadarFlag)    
     #HVPS
-    NC_SizeMid_HVPS, NC_z_dNdDp_HVPS= Avg_OAP_dndDp_Dict(FlightDict, 'NC_HVPS_size', 'Time_Core', 'NC_All_accept_HVPS_psd', StartTime[i],EndTime[i],RadarFlag)
+    NC_SizeMid_HVPS, NC_z_dNdDp_HVPS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_HVPS', 'Time_Core', 'PSD_Num_All_HVPS', StartTime[i],EndTime[i],RadarFlag)
     #CombinePSDs
     CompositeSize, Composite_dN, Composite_dNdDp=CompositePSD(NC_SizeMid_2DS, NC_z_dNdDp_2DS, NC_SizeMid_HVPS, NC_z_dNdDp_HVPS)
     
@@ -1511,27 +1555,107 @@ def SingleRunPSD(RunNumber,FlightDict,FlightTrack_ZED_H,AltitudeBins,ZED_H_grid,
     IWC_avg_colocate=np.nanmean(IWC_gm3[StartIdx:EndIdx])
       
     #Reflectivity
-    #Reflectivity_1D[RadarFlag!=1]=np.nan
+    Reflectivity_1D[RadarFlag!=1]=np.nan
     Zed_1D_avg=np.nanmean( Reflectivity_1D[StartIdx:EndIdx])
     
-    # Average altitude
-    ALT_GIN=FlightDict['ALT_GIN'] 
-    ALT_avg=np.nanmean(ALT_GIN[StartIdx:EndIdx])
-    Zed_Alt_avg=CalcAltitudeAvgReflectivity(ALT_avg,AltitudeBins,ZED_H_grid)
-    
-    print('Reflectivity from altitude average = '+str(Zed_Alt_avg)+' dBz')
-    print('Reflectivity from colocate = '+str(Zed_colocate_avg)+' dBz')
     print('Reflectivity from tracking = '+str(Zed_1D_avg)+' dBz')
     print('IWC = '+str(IWC_avg)+' g/m3')
     print('IWC (colocate) = '+str(IWC_avg_colocate)+' g/m3')
     
     
-    return IWC_avg_colocate, IWC_avg, Zed_Alt_avg, Zed_1D_avg, Zed_colocate_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr
+    return IWC_avg_colocate, IWC_avg, Zed_1D_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr
+
+
+
+
+#_____________________________________________________________________________________________________
+
+# Ouput combine 2DS and HVPS size distribution for a given run
+
+
+
+#    CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
+#    CSVName='flight-sum_faam_20180213_r0_c081.csv'
+
+
+#def SingleRunPSD(RunNumber,FlightDict,FlightTrack_ZED_H,AltitudeBins,ZED_H_grid,CSVPath,CSVName):
+
+    #Load flight log and choose run number
+#    StartTime, EndTime, RunNumberArray, ProfileNumber = LoadFlightSummaryCSV(CSVPath,CSVName)
+    
+    #RunNumber=2
+    
+#    tmp=RunNumberArray.tolist()
+#    i=tmp.index(RunNumber)
+    
+#    print ('Run number '+str(RunNumberArray[i]))
+#    RunStr='RunNumber'+str(int(RunNumberArray[i]))
+
+#    NC_HI_2DS=FlightDict['NC_HI_2DS']
+    
+#    IWC_gm3=FlightDict['IWC_g_m3']  
+#    Reflectivity_1D= FlightDict['Reflectivity']
+    
+
+    #Flag to only average the insitu data when colocated with the radar RHIs
+    #RadarFlag=np.zeros(len(FlightTrack_ZED_H))
+    #RadarFlag[FlightTrack_ZED_H==FlightTrack_ZED_H]=1 # 1=radar colocated 
+
+    #Flag to only average the insitu data when colocated with the radar tracking
+#    RadarFlag=np.zeros(len(IWC_gm3))
+#    RadarFlag=(np.where((Reflectivity_1D==Reflectivity_1D) & (IWC_gm3==IWC_gm3) & (NC_HI_2DS>0),1,0)) 
+
+
+#    Time_Core=FlightDict['Time_Core']
+#    StartIdx=bisect.bisect_left(Time_Core, StartTime[i]) # assume time is sorted, which it should be 
+#    EndIdx=bisect.bisect_left(Time_Core, EndTime[i]) # assume time is sorted, which it should be  
+
+#    Zed_colocate_avg=np.nanmean(FlightTrack_ZED_H[StartIdx:EndIdx])   
+   
+    #Prefix='NC_All_accept'    
+    #2DS
+#    NC_SizeMid_2DS, NC_z_dNdDp_2DS= Avg_OAP_dndDp_Dict(FlightDict, 'NC_2DS_size', 'Time_Core', 'NC_HI_z_2DS_psd', StartTime[i],EndTime[i],RadarFlag)    
+    #HVPS
+#    NC_SizeMid_HVPS, NC_z_dNdDp_HVPS= Avg_OAP_dndDp_Dict(FlightDict, 'NC_HVPS_size', 'Time_Core', 'NC_All_accept_HVPS_psd', StartTime[i],EndTime[i],RadarFlag)
+    #CombinePSDs
+#    CompositeSize, Composite_dN, Composite_dNdDp=CompositePSD(NC_SizeMid_2DS, NC_z_dNdDp_2DS, NC_SizeMid_HVPS, NC_z_dNdDp_HVPS)
+    
+    #plt.plot(CompositeSize, Composite_dN)
+    #plt.xscale('log')
+    #plt.yscale('log')
+    
+    #Radar_ref, IWC=CalculateReflectivityIce(CompositeSize, Composite_dN, 7.38E-11, 1.9) # brown and francis
+    #Radar_ref, IWC=CalculateReflectivityIce(CompositeSize, Composite_dN, 1.6547E-12, 2.47368)
+    
+    #Nevzorov
+#    IWC_avg=np.nanmean(IWC_gm3[StartIdx:EndIdx])
+#    IWC_gm3[RadarFlag!=1]=np.nan
+#    IWC_avg_colocate=np.nanmean(IWC_gm3[StartIdx:EndIdx])
+      
+    #Reflectivity
+    #Reflectivity_1D[RadarFlag!=1]=np.nan
+#    Zed_1D_avg=np.nanmean( Reflectivity_1D[StartIdx:EndIdx])
+    
+    # Average altitude
+#    ALT_GIN=FlightDict['ALT_GIN'] 
+#    ALT_avg=np.nanmean(ALT_GIN[StartIdx:EndIdx])
+#    Zed_Alt_avg=CalcAltitudeAvgReflectivity(ALT_avg,AltitudeBins,ZED_H_grid)
+    
+#    print('Reflectivity from altitude average = '+str(Zed_Alt_avg)+' dBz')
+#    print('Reflectivity from colocate = '+str(Zed_colocate_avg)+' dBz')
+#    print('Reflectivity from tracking = '+str(Zed_1D_avg)+' dBz')
+#    print('IWC = '+str(IWC_avg)+' g/m3')
+#    print('IWC (colocate) = '+str(IWC_avg_colocate)+' g/m3')
+    
+    
+#    return IWC_avg_colocate, IWC_avg, Zed_Alt_avg, Zed_1D_avg, Zed_colocate_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr
 
 
 #_____________________________________________________________________________________________________
 
 # Merge 2DS and HVPS PSD. Weighted average between 700-1000 um.    
+
+#PSD_2DS and PSD_HVPS should be dN/dDp
 
 
 def CompositePSD(Size2DS, PSD_2DS, SizeHVPS, PSD_HVPS):
@@ -1542,8 +1666,13 @@ def CompositePSD(Size2DS, PSD_2DS, SizeHVPS, PSD_HVPS):
     # 700 to 1000 um 2DS + HVPS
     # >1000 um HVPS
     
-    CompositeSize=np.linspace(10,19200,1920)
+    flag = 0
     
+    if np.nansum(PSD_2DS) == 0 or np.nansum(PSD_HVPS) == 0 :
+        #print('missing data cannot make PSD')
+        flag = 1
+       
+    CompositeSize=np.linspace(10,19200,1920)
     CompositeHVPS=np.interp(CompositeSize,SizeHVPS, PSD_HVPS,left=np.nan,right=np.nan)
     Composite2DS=np.interp(CompositeSize,Size2DS, PSD_2DS,left=np.nan,right=np.nan)
     
@@ -1561,10 +1690,17 @@ def CompositePSD(Size2DS, PSD_2DS, SizeHVPS, PSD_HVPS):
             ScaleFactor2DS=(1000-CompositeSize[i])/(1000-700)
             ScaleFactorHVPS=1-ScaleFactor2DS
             Composite_dNdDp[i]=ScaleFactor2DS*Composite2DS[i]+ScaleFactorHVPS*CompositeHVPS[i]
-    
+
     Composite_dN=Composite_dNdDp*BinWidth
+
+
+    if flag == 1 :
+        Composite_dNdDp *= np.nan
+        Composite_dN *= np.nan
+
     
     if 1==2 :
+        fig=plt.figure(figsize=(10,10))
         plt.plot(CompositeSize, CompositeHVPS)
         plt.plot(CompositeSize, Composite2DS)
         plt.plot(CompositeSize, Composite_dNdDp)
@@ -1575,47 +1711,138 @@ def CompositePSD(Size2DS, PSD_2DS, SizeHVPS, PSD_HVPS):
 
 
 
-#_____________________________________________________________________________________________________    
-# Calculate MVD. THIS NEEDS CHECKING!!!!!!!!!!!!!!!!!!!!
+#_____________________________________________________________________________________________________
+# Average 2DS to HVPS bins
+
+
+def Rebin2DS_to_HVPS(dNdDp_2dS, midbin_2dS) : 
+    
+#    HVPSsize= np.linspace(150,19200, num=128)
+    
+    dN_2dS=10*dNdDp_2dS
+    temp = [np.nansum(dN_2dS[7+x*15:21+x*15]) for x in range(0,7) ] 
+#    test = [np.nansum(dNdDp_2dS[7+x*15:21+x*15]) for x in range(0,7) ]
+    rebin2DS= np.zeros([128])  
+    rebin2DS[0:7] = temp
+    rebin2DS /= 150 #convert back to dNdD
+
+    return rebin2DS
 
 
 
-def CalculateMVD(PSD,MidSize):
+
+#_____________________________________________________________________________________________________
+
+# Merge 2DS and HVPS PSD. Weighted average between 700-1000 um.    
+
+#PSD_2DS and PSD_HVPS should be dN/dDp
+
+
+
+def CompositePSD_v2(Size2DS, PSD_2DS, SizeHVPS, PSD_HVPS):
     
-    MidMass=np.zeros(len(MidSize))
-    for i in range(len(MidSize)):
-    #    if(MidSize[i]<100):
-    #        prefix = 4.82
-    #        exponent = -13
-    #        power = 3.0
-    #    else:
-    #        prefix = 7.38
-    #        exponent = -11
-    #        power = 1.9
-    #    MidMass[i] = prefix * (MidSize[i]**power) * (10**exponent)	
-        MidMass[i] = 1/6 * np.pi * MidSize[i] ** 3 # Convert D to radius
+    #BinWidth=10
     
-    PSD_mass= PSD * np.transpose(MidMass)      
-    TotalMass = np.sum(PSD_mass,axis=1)
+    # <600um 2DS with 10um width
+    # 650 to 1050 um 2DS + HVPS width 150 um width
+    # >1050 um HVPS width 150 um width
     
-    #CumPSD=np.zeros(np.size(PSD_mass, axis=0),np.size(PSD_mass, axis=1))
+    flag = 0
+    if np.nansum(PSD_2DS) == 0 or np.nansum(PSD_HVPS) == 0 :
+        #print('missing data cannot make PSD')
+        flag = 1
+       
+    #Set up size bins and widths 
+    CompositeSize_part1=np.arange(10,530,10,dtype=np.float64)
+    CompositeSize_part2=np.arange(600,19350,150,dtype=np.float64)
+    CompositeSize= np.append(CompositeSize_part1, CompositeSize_part2)
+    CompositeWidth=np.zeros([177])
+    CompositeWidth[0:52]=10
+    CompositeWidth[52:177]=150
     
-    Pro= PSD_mass / TotalMass[:,None]
-    CumPSD= np.cumsum(PSD_mass, axis=1,)/ TotalMass[:,None]
+    Composite_dNdDp=np.zeros(len(CompositeSize))
+    Composite_hvps=np.zeros(len(CompositeSize))
+    Composite_2ds=np.zeros(len(CompositeSize))
+
+    rebin2DS = Rebin2DS_to_HVPS(PSD_2DS, Size2DS)
     
-    #PSD_mass / TotalMass[:,None]
-    Idx=np.zeros(np.size(PSD_mass, axis=0))*np.nan
-    Idx=np.argmax(CumPSD>0.5,1) #- (np.amin(CumPSD<=0.5,1))
+    Composite_hvps[52:]=PSD_HVPS[3:]
+    Composite_2ds[52:]=rebin2DS[3:]
     
-    #Idx[Idx==0]=np.nan
-    #MVD = MidSize[Idx]+ ((0.5 - CumPSD[Idx-1])/Pro[Idx])*(MidSize[Idx+1] - MidSize[Idx])
-    MVD=np.zeros(len(Idx))*np.nan
+    #Composite_dNdDp[0:52]=PSD_2DS
     
-    for i in range(len(Idx)):    
-        if Idx[i]==Idx[i]:
-            MVD[i]= MidSize[Idx[i]-1]+((0.5-CumPSD[i,Idx[i]-1])/(CumPSD[i,Idx[i]]-CumPSD[i,Idx[i]-1]))*(MidSize[Idx[i]]-MidSize[Idx[i]-1])
-    
-    return MVD #CumPSD, Idx 
+    for i in range(len(CompositeSize)) : 
+        if (CompositeSize[i]<600):
+            Composite_dNdDp[i]=PSD_2DS[i]
+        if (CompositeSize[i]>=600) & (CompositeSize[i]<=1050):
+            ScaleFactor2DS=(1050-CompositeSize[i])/(1050-600)
+            ScaleFactorHVPS=1-ScaleFactor2DS
+            Composite_dNdDp[i]=ScaleFactor2DS*Composite_2ds[i]+ScaleFactorHVPS*Composite_hvps[i]
+        if (CompositeSize[i]>=1050) :
+            Composite_dNdDp[i]=Composite_hvps[i]
+
+    Composite_dN=Composite_dNdDp*CompositeWidth
+#
+#
+    if flag == 1 :
+        Composite_dNdDp *= np.nan
+        Composite_dN *= np.nan
+#
+#    
+#    if 1==2 :
+#        fig=plt.figure(figsize=(10,10))
+#        plt.plot(CompositeSize, CompositeHVPS)
+#        plt.plot(CompositeSize, Composite2DS)
+#        plt.plot(CompositeSize, Composite_dNdDp)
+#        plt.yscale('log')
+#        plt.xscale('log')
+#    
+    return CompositeSize, CompositeWidth, Composite_dN, Composite_dNdDp
+
+
+
+
+##_____________________________________________________________________________________________________    
+## Calculate MVD. THIS NEEDS CHECKING!!!!!!!!!!!!!!!!!!!!
+#
+#
+#
+#def CalculateMVD(PSD,MidSize):
+#    
+#    MidMass=np.zeros(len(MidSize))
+#    for i in range(len(MidSize)):
+#    #    if(MidSize[i]<100):
+#    #        prefix = 4.82
+#    #        exponent = -13
+#    #        power = 3.0
+#    #    else:
+#    #        prefix = 7.38
+#    #        exponent = -11
+#    #        power = 1.9
+#    #    MidMass[i] = prefix * (MidSize[i]**power) * (10**exponent)	
+#        MidMass[i] = 1/6 * np.pi * MidSize[i] ** 3 # Convert D to radius
+#    
+#    PSD_mass= PSD * np.transpose(MidMass)      
+#    TotalMass = np.sum(PSD_mass,axis=1)
+#    
+#    #CumPSD=np.zeros(np.size(PSD_mass, axis=0),np.size(PSD_mass, axis=1))
+#    
+#    Pro= PSD_mass / TotalMass[:,None]
+#    CumPSD= np.cumsum(PSD_mass, axis=1,)/ TotalMass[:,None]
+#    
+#    #PSD_mass / TotalMass[:,None]
+#    Idx=np.zeros(np.size(PSD_mass, axis=0))*np.nan
+#    Idx=np.argmax(CumPSD>0.5,1) #- (np.amin(CumPSD<=0.5,1))
+#    
+#    #Idx[Idx==0]=np.nan
+#    #MVD = MidSize[Idx]+ ((0.5 - CumPSD[Idx-1])/Pro[Idx])*(MidSize[Idx+1] - MidSize[Idx])
+#    MVD=np.zeros(len(Idx))*np.nan
+#    
+#    for i in range(len(Idx)):    
+#        if Idx[i]==Idx[i]:
+#            MVD[i]= MidSize[Idx[i]-1]+((0.5-CumPSD[i,Idx[i]-1])/(CumPSD[i,Idx[i]]-CumPSD[i,Idx[i]-1]))*(MidSize[Idx[i]]-MidSize[Idx[i]-1])
+#    
+#    return MVD #CumPSD, Idx 
 
 #_____________________________________________________________________________________________________
 
@@ -1867,10 +2094,11 @@ def Cooper_INP(T_C):
 
 # Add tracking radar .mat files to flight dictionary and put on the time base Time_Core 
 
-def AddRadar2FlightDict(FlightDict):
+def AddRadar2FlightDict(FlightDict,FlightStr,PathDict):
 
+    RadarPath= PathDict[FlightStr,'RadarTimeSeriesPath']
     Time_Core=FlightDict['Time_Core']
-    BatchTimeRadar,BatchReflectivity=BatchRadarMat()
+    BatchTimeRadar,BatchReflectivity=BatchRadarMat(RadarPath)
         
     ReflectivityCore=ChangeTimeBaseAvg(BatchTimeRadar,BatchReflectivity,Time_Core,1)
     FlightDict['Reflectivity']= ReflectivityCore
@@ -1881,12 +2109,12 @@ def AddRadar2FlightDict(FlightDict):
 
 # Load tracking radar data
 
-def BatchRadarMat():
+def BatchRadarMat(Path):
 
     BatchTimeRadar = []
     BatchReflectivity = [] 
     #Path='C:/Users/Admin TEMP/Documents/PICASSO/RadarData/Time series/'
-    Path='C:/Users/Admin TEMP/Documents/PICASSO/RadarData/C081_TimeSeries/'
+    #Path='C:/Users/Admin TEMP/Documents/PICASSO/RadarData/C081_TimeSeries/'
     for filena in os.listdir(Path):
         if filena.endswith(".mat"):     
             print(Path)
@@ -1922,5 +2150,298 @@ def LoadRadarMatFiles(Path,FileName):
     #return Test
     #Reflectivity = data_struct['Reflectivity'][0,0]
     #return Reflectivity 
+
+#____________________________________________________________________________________________________
+
+def SaveRunPSDs(FlightDict):
+    
+    #Load flight log and choose run number
+    CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
+    CSVName='flight-sum_faam_20180213_r0_c081.csv'
+    StartTime, EndTime, RunNumberArray, ProfileNumber = LoadFlightSummaryCSV(CSVPath,CSVName)
+        
+    Output=np.linspace(10,19200,1920) # First column bin centers    
+     
+    #Output=np.zeros((1920,int(1+np.max(RunNumberArray))))*np.nan
+    #print(int(1+np.max(RunNumberArray)))
+    #TitleStr='BinMid_um,'
+    Output={}
+    Output['SizeBinMid_um']=np.linspace(10,19200,1920)
+    
+    for i in range(len(RunNumberArray)) :
+        
+        if RunNumberArray[i]==RunNumberArray[i] : # check not a nan
+            #print ('Run number '+str(RunNumberArray[i]))
+            if RunNumberArray[i]<10 :
+                RunStr='RunNumber0'+str(int(RunNumberArray[i]))
+            else :
+                RunStr='RunNumber'+str(int(RunNumberArray[i]))
+            #2DS
+            NC_SizeMid_2DS, NC_z_dNdDp_2DS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_2DS', 'Time_Core', 'PSD_Num_All_2DS', StartTime[i],EndTime[i],1)    
+            #HVPS
+            NC_SizeMid_HVPS, NC_z_dNdDp_HVPS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_HVPS', 'Time_Core', 'PSD_Num_All_HVPS', StartTime[i],EndTime[i],1)
+            #CombinePSDs
+            CompositeSize, CompositeWidth, Composite_dN, Composite_dNdDp=CompositePSD_v2(NC_SizeMid_2DS, NC_z_dNdDp_2DS, NC_SizeMid_HVPS, NC_z_dNdDp_HVPS)
+            #Output[:,int(RunNumberArray[i])]=Composite_dNdDp
+           
+            fig=plt.figure(figsize=(5,5))
+            
+            plt.plot(NC_SizeMid_HVPS, NC_z_dNdDp_HVPS,'+')
+            plt.plot(NC_SizeMid_2DS, NC_z_dNdDp_2DS,'+')
+            plt.plot(CompositeSize,Composite_dNdDp,'o')
+            plt.xscale('log')
+            plt.yscale('log')
+            
+   #         Output[RunStr]=Composite_dNdDp
+    
+            #EffectiveDiameter= CalculateEffectiveDiameter(Composite_dN, CompositeSize)
+            print(RunStr)
+            print('New')
+            print(CalculateVolumeMeanDiameter(Composite_dN, CompositeSize)) 
+    
+            CompositeSize,Composite_dN, Composite_dNdDp=CompositePSD(NC_SizeMid_2DS, NC_z_dNdDp_2DS, NC_SizeMid_HVPS, NC_z_dNdDp_HVPS)
+            plt.plot(CompositeSize,Composite_dNdDp)
+            print('old')
+            print(CalculateVolumeMeanDiameter(Composite_dN, CompositeSize)) 
+            
+            
+    
+    #df = pd.DataFrame(data=Output)   
+    #df.to_csv('C:/Users/Admin TEMP/Documents/MPhysProject/C081_RunAvgPSDs_dNdDp_per_L_um.csv')
+    
+    #return df
+ 
+#____________________________________________________________________________________________________
+
+def Save30sAvgPSDs(FlightDict):
+    
+    #Load flight log and choose run number
+    #CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
+    #CSVName='flight-sum_faam_20180213_r0_c081.csv'
+    #StartTime, EndTime, RunNumberArray, ProfileNumber = LoadFlightSummaryCSV(CSVPath,CSVName)
+     
+    Time_Core=FlightDict['Time_Core']
+    StartTime=Time_Core[0]
+    EndTime=Time_Core[-1]
+    Npts=((EndTime-StartTime).total_seconds())/30
+    Time30s = [StartTime + datetime.timedelta(seconds=30*x) for x in range(0, int(Npts))]
+    #Time30s_mid = [StartTime + datetime.timedelta(seconds=15+30*x) for x in range(0, int(Npts-1))]
+    
+    Output=np.linspace(10,19200,1920) # First column bin centers    
+     
+    Output={}
+    Output['SizeBinMid_um']=np.linspace(10,19200,1920)
+    
+    for i in range(len(Time30s)-2) :
+        
+        #2DS
+        NC_SizeMid_2DS, NC_z_dNdDp_2DS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_2DS', 'Time_Core', 'PSD_Num_All_2DS', Time30s[i],Time30s[i+1],1)    
+        #HVPS
+        NC_SizeMid_HVPS, NC_z_dNdDp_HVPS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_HVPS', 'Time_Core', 'PSD_Num_All_HVPS', Time30s[i],Time30s[i+1],1)
+        #CombinePSDs
+        CompositeSize, Composite_dN, Composite_dNdDp=CompositePSD(NC_SizeMid_2DS, NC_z_dNdDp_2DS, NC_SizeMid_HVPS, NC_z_dNdDp_HVPS)
+        
+        MidTime= Time30s[i] + datetime.timedelta(seconds=((Time30s[i+1]-Time30s[i])/2).total_seconds())
+        
+        Output[MidTime]=Composite_dNdDp 
+    df = pd.DataFrame(data=Output)     
+    #df.T.to_csv('C:/Users/Admin TEMP/Documents/MPhysProject/C081_30sPSDs_dNdDp_per_L_um.csv')
+      
+    df.T.to_csv('C:/Users/Admin TEMP/Documents/MPhysProject/Data_4Mphys/C082/C082_30sPSDs_dNdDp_per_L_um.csv')
+    
+    #return Time30s, df  
+
+
+
+#____________________________________________________________________________________________________
+# Creates a 2d array with time, size and concentration by merging 2ds and hvps
+
+
+def AvgPSDcompositePSD(FlightDict,NumberSeconds):
+    
+    #Load flight log and choose run number
+    #CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
+    #CSVName='flight-sum_faam_20180213_r0_c081.csv'
+    #StartTime, EndTime, RunNumberArray, ProfileNumber = LoadFlightSummaryCSV(CSVPath,CSVName)
+     
+    Time_Core=FlightDict['Time_Core']
+    StartTime=Time_Core[0]
+    EndTime=Time_Core[-1]
+    Npts=((EndTime-StartTime).total_seconds())/NumberSeconds
+    TimeAvg = [StartTime + datetime.timedelta(seconds=NumberSeconds*x) for x in range(0, int(Npts))]
+    TimeAvg_mid = [StartTime + datetime.timedelta(seconds=(NumberSeconds/2)+NumberSeconds*x) for x in range(0, int(Npts-1))]
+    
+    #Output=np.linspace(10,19200,1920) # First column bin centers    
+     
+    Output_dNdDp_v2=np.zeros((int(Npts-1), 177))*np.nan
+    #Test=np.zeros((int(Npts-1), 1920))*np.nan
+    #Output['SizeBinMid_um']=np.linspace(10,19200,1920)
+    
+    for i in range(len(TimeAvg)-2) :
+        
+        #2DS
+        NC_SizeMid_2DS, NC_z_dNdDp_2DS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_2DS', 'Time_Core', 'PSD_Num_All_2DS', TimeAvg[i],TimeAvg[i+1],1)        
+        #HVPS
+        NC_SizeMid_HVPS, NC_z_dNdDp_HVPS= Avg_OAP_dndDp_Dict(FlightDict, 'Size_mid_HVPS', 'Time_Core', 'PSD_Num_All_HVPS', TimeAvg[i],TimeAvg[i+1],1)
+        #CombinePSDs
+        #testSize, test_dN, test_dNdDp=CompositePSD(NC_SizeMid_2DS, NC_z_dNdDp_2DS, NC_SizeMid_HVPS, NC_z_dNdDp_HVPS)
+        #Test[i,:]=test_dNdDp 
+            
+        CompositeSize, CompositeWidth, Composite_dN, Composite_dNdDp=CompositePSD_v2(NC_SizeMid_2DS, NC_z_dNdDp_2DS, NC_SizeMid_HVPS, NC_z_dNdDp_HVPS)
+        Output_dNdDp_v2[i,:]=Composite_dNdDp 
+    
+    
+    #df = pd.DataFrame(data=Output)     
+    #df.T.to_csv('C:/Users/Admin TEMP/Documents/MPhysProject/C081_30sPSDs_dNdDp_per_L_um.csv')
+
+    return Output_dNdDp_v2, TimeAvg_mid, CompositeSize, CompositeWidth
+
+
+#____________________________________________________________________________________________________
+
+def OutputData4MPhys(FlightDict) : 
+
+    OutputPath='C:/Users/Admin TEMP/Documents/MPhysProject/C082_TimeSeries.csv'
+    
+#    with open(OutputPath, 'w') as f:
+#        #for key in FlightDict.keys():
+#        f.write("%s,%s\n"%('ALT_GIN',FlightDict['ALT_GIN']))
+
+    fieldnames = ['Time','Altitude','Latitude', 'Longitude','Temperature', 'Pressure_mb', 'Reflectivity_dBZ', 'IWC_g_m3','LWC_g_m3']
+    with open( OutputPath, 'w', newline='' ) as f:
+        writer = csv.writer(f)
+        writer.writerow(fieldnames)
+        writer.writerows(zip(FlightDict['Time_Core'],FlightDict['ALT_GIN'], FlightDict['LAT_GIN'], FlightDict['LON_GIN'],FlightDict['TAT_ND_R_C'], FlightDict['P9_STAT'], FlightDict['Reflectivity'], FlightDict['IWC_g_m3'], FlightDict['LWC_g_m3']))
+
+
+#____________________________________________________________________________________________________
+
+def CalculateIWC_BandF(dNdD, Size):
+
+    MassParticle =(np.where(Size <=  100, (4.82E-13) * (Size**3) ,  (7.38E-11)*(Size**1.9))) # Mass of particle g
+    dN= dNdD * 10 # Convert to L-1
+    dM = dN * MassParticle # g L-1
+    IWC= 1000 * np.nansum(dM)  # g m-3
+
+    print(IWC) 
+    return IWC 
+
+
+#____________________________________________________________________________________________________
+#Calculate Z and IWC from psd using brown and francis
+
+
+def Compare_IWC_Z_BrownFrancis(FlightDict):
+    NumberSeconds=30
+    Output_dNdDp, TimeAvg_mid, CompositeSize, CompositeWidth=AvgPSDcompositePSD(FlightDict,NumberSeconds)
+    Zarray= np.zeros([np.size(Output_dNdDp,0)])*np.nan
+    IWCarray= np.zeros([np.size(Output_dNdDp,0)])*np.nan
+        
+    np.size(Output_dNdDp,0)
+        
+    for i in range(np.size(Output_dNdDp,0)) : 
+        Run = np.array(Output_dNdDp[i, :], dtype=float)
+        if np.nansum(Run) > 0 : 
+             
+            Run_dN_L = Run * CompositeWidth
+            Zarray[i],IWCarray[i]= CalculateReflectivityIce(CompositeSize, Run_dN_L, 7.38E-11, 1.9)
+            
+            
+    
+    Reflectivity_1Hz=FlightDict['Reflectivity']
+    IWC_g_m3_1Hz=FlightDict['IWC_g_m3']
+    Time_Core_1Hz=FlightDict['Time_Core']
+    
+    fig=plt.figure(figsize=(10,10)) 
+    ax1= plt.subplot(2, 1, 2)
+    ax1.plot(Time_Core_1Hz,IWC_g_m3_1Hz, label='Nevzorov')
+    ax1.plot(TimeAvg_mid, IWCarray, label='PSD Brown & Francis')
+    plt.ylabel('IWC, g m$^{-3}$')
+    plt.ylim([0,1])
+    plt.legend()
+    
+    ax2= plt.subplot(2,1,1,sharex=ax1)
+    ax2.plot(Time_Core_1Hz,Reflectivity_1Hz, label='Chilbolton')
+    ax2.plot(TimeAvg_mid,Zarray, label='PSD Brown & Francis')
+    plt.ylabel('Z, dBZ')
+    plt.legend()
+    
+    date_format = mdates.DateFormatter('%H:%M:%S')
+    plt.gca().xaxis.set_major_formatter(date_format)   
+    plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=2) )
+    plt.gca().xaxis.set_minor_locator(mdates.HourLocator()) 
+    
+    FilePath='C:/Users/Admin TEMP/Desktop/'
+    plt.savefig(FilePath+'IWC_Z_BrownFrancis.png',dpi=200)
+    plt.close(fig)
+    
+
+#____________________________________________________________________________________________________
+#
+
+#_____________________________________________________________________________________________________
+
+# Calculate ice reflectivity
+
+
+# brown and francis a= 7.38E-11, b = 1.9, D in um, M in g
+#Eq 2 Hogan et al., 2006  
+
+
+def CalculateReflectivityIce(Size, dN_L, a, b):
+    # dN in L-1
+    dN=dN_L*1000 # m-3
+    density_ice= 0.9167/1000			# g mm^-2    
+    radar_scaleF = ( (0.174/0.93) * (36/(math.pi*math.pi*density_ice*density_ice)) )  # g^-2 mm^6	   
+
+
+#    massVal= np.zeros(len(Size))
+#    for i in range(len(Size)):		
+#        if(Size[i] >= 100) : 
+#            massVal[i]=a*(Size[i]**b)			# g
+#        else : 
+#            massVal[i]=(4.82E-13)*(Size[i]**3)		# g
+    
+    massVal =(np.where(Size <=  100, (4.82E-13) * (Size**3) ,  (a)*(Size**b)))
+    
+    Radar_ref_array= dN * massVal * massVal		# g^2 m^-3     
+    Radar_ref= 10* math.log(radar_scaleF * np.nansum(Radar_ref_array),10)		# Log to the base 10
+    IWC= np.sum(dN* massVal) # g m3
+    print(Radar_ref) 
+    print(IWC)    
+    return Radar_ref, IWC
+
+
+#_____________________________________________________________________________________________________
+
+# Calculate reflecivtiy using drop PSD
+
+
+#Mason et al 2017 eq7     
+
+def CalculateReflectivityLiquid(Size_um, dN_L, a, b):
+    # dN in L-1
+    dN=dN_L*1000 # m-3
+    Size= Size_um/1000 # mm
+   
+    
+    #Size/= 1E6 # m
+    #SecondMoment= (dN)*Size**2
+    #ForthMoment= (dN)*Size**4
+    #Size*=1E6 #um
+    
+    MRratio=1 #Mie–Rayleigh backscatter ratio at the radar frequency
+    Radar_ref_array= np.zeros(len(Size))
+    for i in range(len(Size)):		
+            Radar_ref_array[i]=dN*(Size[i]**6)*MRratio  # mm6/m3
+    
+    Radar_ref= 10* math.log(np.sum(Radar_ref_array),10)		# Log to the base 10
+    
+    #print(Radar_ref) 
+    #print(IWC)    
+    return Radar_ref
+
+
+#_____________________________________________________________________________________________________
 
 

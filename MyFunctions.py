@@ -14,7 +14,7 @@ import scipy.io as sio
 import matplotlib.pyplot as plt  
 import matplotlib.dates as mdates
 import matplotlib.colors as colors
-from matplotlib.mlab import bivariate_normal
+#from matplotlib.mlab import bivariate_normal
 from matplotlib.dates import DateFormatter
 import os
 import pandas as pd
@@ -411,6 +411,8 @@ def LoadOAP_nc(ProbeFlag,FilePath,FileNameOAP, PlotFlag):
     if ProbeFlag=='2DS': 
         FlightDate= datetime.datetime(int(FileNameOAP[9:13]), int(FileNameOAP[13:15]), int(FileNameOAP[15:17]), 0, 0, 0)
 
+    if ProbeFlag=='CIP15' : 
+        FlightDate= datetime.datetime(int(FileNameOAP[11:15]), int(FileNameOAP[15:17]), int(FileNameOAP[17:19]), 0, 0, 0)
     
     
     NC_DateTime= [FlightDate + datetime.timedelta(seconds=int(Time_mid[x])) for x in range(len(Time_mid))]
@@ -455,6 +457,9 @@ def LoadOAP_nc(ProbeFlag,FilePath,FileNameOAP, PlotFlag):
     
 
     return NC_DateTime, Time_mid, Time_edge, Size_mid, Size_edge, PSD_Num_S, PSD_Num_LI, PSD_Num_MI, PSD_Num_HI, PSD_Num_All
+
+
+
 
 
 
@@ -1097,3 +1102,31 @@ def HALOholo_quicklook():
     #plt.plot(ParticleTime_sinceMidnight[IPD>IPD_threshold], Diameter[IPD>IPD_threshold],'o')
     plt.xscale('log')
     plt.yscale('log')
+
+
+#_____________________________________________________________________________________________________    
+#
+# Calculate Effective radius. Ratio of the 3rd to 2nd moment of size distribution
+
+def CalculateEffectiveDiameter(dN, Mid_Diameter):
+       
+    Moment3= np.nansum(dN* (Mid_Diameter **3))
+    Moment2= np.nansum(dN* (Mid_Diameter **2))
+    EffectiveDiameter= Moment3 / Moment2
+    
+    return EffectiveDiameter
+
+
+#_____________________________________________________________________________________________________    
+#
+# Diameter of the particle whose volume equals the mean volume of the population
+# Seinfeld and pandis page 361
+
+def CalculateVolumeMeanDiameter(dN, Mid_Diameter):
+    Mid_Vol= (np.pi / 6)* Mid_Diameter**3
+    VolumeMeanDiameter = (6 * np.nansum(Mid_Vol*dN)) / (np.pi*np.nansum(dN))
+    VolumeMeanDiameter= (VolumeMeanDiameter)**(1/3)
+    return VolumeMeanDiameter
+
+#_____________________________________________________________________________________________________    
+#

@@ -23,7 +23,7 @@ from MyFunctions import LoadCoreCloud,loadFAAMCore,LoadNevzorov, Average_nPts_2D
 from MyFunctions import Average_nPts,Average_nPts_datetime,DateTime2IgorTime,ChangeTimeBaseAvg,ChangeTimeBase2DAvg
 
 from PICASSO_functions import PlotCrossSections2CHB,PlotCrossSections, LoadFlightData2Dict, DataPaths,PlotFlightSummary, AverageFlightDict,CompareIWC,PlotFlight,BatchPlotCDPCore,TrackPlot
-from PICASSO_functions import AddRadar2FlightDict,Plot_TvsHI, LoadFlightSummaryCSV, PSD_runs_dict,CompositePSD, SingleRunPSD, CalculateMVD, LoadRadar, Colocate, PlotRadar, BinAverage2D
+from PICASSO_functions import AddRadar2FlightDict,Plot_TvsHI, LoadFlightSummaryCSV, PSD_runs_dict,CompositePSD, LoadRadar, Colocate, PlotRadar, BinAverage2D
  
 from Mass_Dimension import a_b_MonteCarlo_hist,Find_a_b_MonteCarlo,Find_a_b,BrownFrancis
 
@@ -36,10 +36,10 @@ PathDict=DataPaths()
 #FlightList=['C082']
 #PlotFlight(PathDict,FlightList)
 
-
-FlightDict_C081=LoadFlightData2Dict(1,0,1,0,'C081',PathDict)
-#FlightDict_C098=LoadFlightData2Dict(0,1,0,1,'C098',PathDict)
-#AddRadar2FlightDict(FlightDict_C081)
+#FlightDict_C081=LoadFlightData2Dict(1,1,1,1,0,'C081',PathDict)
+FlightDict_C082=LoadFlightData2Dict(0,0,1,1,1,'C082',PathDict)
+#FlightDict_C098=LoadFlightData2Dict(1,0,1,0,1,'C098',PathDict)
+#AddRadar2FlightDict(FlightDict_C082,'C082',PathDict)
 
 #CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c098-apr-24/'
 #CSVName='flight-sum_faam_20180424_r0_c098.csv'
@@ -48,7 +48,7 @@ FlightDict_C081=LoadFlightData2Dict(1,0,1,0,'C081',PathDict)
 #CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
 #CSVName='flight-sum_faam_20180213_r0_c081.csv'
 #FlightStr='C081'
-
+#
 #PSD_runs_dict(PathDict, FlightStr,CSVPath,CSVName)
 
 #PlotCrossSections2CHB(FlightDict_C081,PathDict['C081','FullPath'],'C081')
@@ -58,7 +58,7 @@ FlightDict_C081=LoadFlightData2Dict(1,0,1,0,'C081',PathDict)
 #TrackPlot(FlightDict_C081,PathDict['C081','FullPath'], 'CO81')
 
 
-
+#OutputData4MPhys(FlightDict_C082)
 
 
 
