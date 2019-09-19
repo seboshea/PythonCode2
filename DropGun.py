@@ -21,6 +21,7 @@ import math
 import pandas as pd
 from GrayscaleFunctions import LoadGrayScaleStats, GrayscaleRatios, sVol_EAW_INT,Get_DLow_D0_model
 from scipy.stats.stats import pearsonr
+import matplotlib.ticker as plticker
 
 #ParticleTimesWv=[]
 #PartGrayStatsWv=[]
@@ -708,7 +709,12 @@ def Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,Ar
     DiameterLevel1_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(DiameterLevel1,Particle_Y,StartBin,EndBin,NumBins)
     mask = ~np.isnan(DiameterLevel1_bin) # remove nans
     filtered_data = [d[m] for d, m in zip(DiameterLevel1_bin.T, mask.T)]
-    D_Level1_avg = [np.nanmedian(x) for x in filtered_data]
+    #D_Level1_avg = [np.nanmedian(x) for x in filtered_data]    
+    D_Level1_avg = [np.nanmean(x) for x in filtered_data]   
+    #D_Level1_avg = [np.nanpercentile(x,25) for x in filtered_data]
+    
+    
+    
     
     #Diameter 0
     DiameterLevel0_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(DiameterLevel0,Particle_Y,StartBin,EndBin,NumBins)
@@ -728,11 +734,6 @@ def Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,Ar
     filtered_data = [d[m] for d, m in zip(AreaRatio_bin.T, mask.T)]
     VoidRatioAvg = [np.nanmedian(x) for x in filtered_data]
 #    return VoidRatio
-    
-    
-    
-    
-    
     
     return AF_Level2_avg, AF_Level1_avg, AF_Level0_avg, D_Level2_avg, D_Level1_avg, D_Level0_avg, BinCentre,D_KorolevCorr_avg, VoidRatioAvg
     
@@ -1263,7 +1264,7 @@ def LoadModelGrayScale(GSpath):
     
 def ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll):
 
-    SavePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP/'
+    SavePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'
     Model_Stats={}
     Model_D_Percentiles={}
     
@@ -1281,7 +1282,7 @@ def ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll):
         #Figurename='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP/Diameter50'
         #PlotGrayscaleDiameter(DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X,Figurename,'D0=50')
         #D_BG_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterBG)
-        Figurename=SavePath+'Korolev_Reuter_correction_D0_'+str(D0)
+        #Figurename=SavePath+'Korolev_Reuter_correction_D0_'+str(D0)
         #Plot_BG_diameter(D_KorolevCorr,DiameterLevel1, D_BG_KorolevCorr, DiameterBG, Particle_X,Figurename,'D0='+str(D0)+' μm',D0,20)
         
         #VoidRatio = VoidArea / FilledArea
@@ -1294,6 +1295,8 @@ def ModelGS_Stats(ParticleStatsWv,ActualDiameterAll,StageXAll):
         
         #Model_D_Percentiles[str(D0)]=PercentilesKorolevReuterDiameter(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,D0,20)
         
+        #Figurename=SavePath+'Diameter_Z0_'+str(D0)
+        #PlotZ0hist(DiameterLevel1, Particle_X,50,Figurename)
         
         Model_Stats[str(D0)]=Avg_Areafraction_Diameter(VoidArea,FilledArea,D_KorolevCorr,AreaFraction0,AreaFraction1,AreaFraction2,DiameterLevel0,DiameterLevel1,DiameterLevel2,Particle_X)
 
@@ -1517,6 +1520,7 @@ def PLot_Areafraction_6Panel_255075():
     plt.rcParams.update({'font.size': 14})
     #ExpList=['120um_25_50_75_run2','90um_25_50_75_run2','60um_25_50_75_run2']
     ExpList=['120um_25_50_75','90um_25_50_75','60um_25_50_75']     
+    #ActualDiameterList=[90,80,55] 
     ActualDiameterList=[90,80,55] 
     CentreOfDOF_DG=29
     
@@ -2818,6 +2822,8 @@ def Model_67grayscale():
 
 #_________________________________________________________________________________________
 
+# Make size distribution of dropgun scan with and without 67%threshold
+
 def Dropgun_67_pdf():
     StageFile='StagePositions_exp001.csv'
     GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255067/20180927120501/Output/'
@@ -2886,19 +2892,20 @@ def BatchPlot_Dropgun_PSD():
     plt.subplot(3, 1, 1)
     GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/20180927111105/Output/'
     StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/'
-    Dropgun_PSD(ExpDate,GSpath, StagePath, 1)
+    Dropgun_PSD(ExpDate,GSpath, StagePath, 1,'60 μm printhead')
     
     plt.subplot(3, 1, 2)
     GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/20180927134617/Output/'
     StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/'
-    Dropgun_PSD(ExpDate,GSpath, StagePath, 0)
+    Dropgun_PSD(ExpDate,GSpath, StagePath, 0,'90 μm printhead')
     
     plt.subplot(3, 1, 3)
     GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/Both/Output/'
     StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/'
-    Dropgun_PSD(ExpDate,GSpath, StagePath, 2)
+    Dropgun_PSD(ExpDate,GSpath, StagePath, 2,'120 μm printhead')
     
     Figurename= 'C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/DropgunPSD_255075.png'
+    plt.tight_layout() 
     plt.savefig(Figurename,dpi=200)
 
 #_________________________________________________________________________________________
@@ -2906,7 +2913,7 @@ def BatchPlot_Dropgun_PSD():
 
 # Make size distribution of dropgun scan
 
-def Dropgun_PSD(ExpDate,GSpath, StagePath, LabelFlag):
+def Dropgun_PSD(ExpDate,GSpath, StagePath, LabelFlag, PltTitle):
     StageFile='StagePositions_exp001.csv'   
     
     
@@ -2957,8 +2964,116 @@ def Dropgun_PSD(ExpDate,GSpath, StagePath, LabelFlag):
     if LabelFlag == 2 :
         plt.xlabel('Diameter (K07), μm')
     
+    plt.title(PltTitle)
+    
     #plt.yscale('log')
     
     #Figurename= StagePath+'Dropgun_PSD.png'
     #plt.savefig(Figurename,dpi=200)
     #plt.close(fig) 
+    
+    
+ #_________________________________________________________________________________________
+# Do a histogram of D at Z= 0. Compare model and dropgun
+
+def D_at_Z0_model_dg():
+
+    StageFile='StagePositions_exp001.csv'  
+    
+    #***************** September 2018 ********************
+
+    #60um_25_50_75
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/20180927111105/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/'
+    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
+    Particle_X_60, Particle_Y_60, PartGrayStatsWv_60, ParticleTime_60,ParticleTimesWv_60=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
+    AreaFraction0_60,AreaFraction1_60,AreaFraction2_60,AreaRatio_2_1_60,AreaRatio_1_0_60,DiameterLevel0_60,DiameterLevel1_60,DiameterLevel2_60, FilledArea_60,VoidArea_60,DiameterBG_60,Zd_fromRatios_60=GrayscaleRatios(Particle_X_60, Particle_Y_60, PartGrayStatsWv_60,0,255075)
+
+
+    #90um_25_50_75
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/20180927134617/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/'
+    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
+    Particle_X_90, Particle_Y_90, PartGrayStatsWv_90, ParticleTime_90,ParticleTimesWv_90=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
+    AreaFraction0_90,AreaFraction1_90,AreaFraction2_90,AreaRatio_2_1_90,AreaRatio_1_0_90,DiameterLevel0_90,DiameterLevel1_90,DiameterLevel2_90, FilledArea_90,VoidArea_90,DiameterBG_90,Zd_fromRatios_90=GrayscaleRatios(Particle_X_90, Particle_Y_90, PartGrayStatsWv_90,0,255075)
+ 
+
+    #120um_25_50_75
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/Both/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/'
+    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
+    Particle_X_120, Particle_Y_120, PartGrayStatsWv_120, ParticleTime_120,ParticleTimesWv_120=LoadGrayScaleStats_Stage(GSpath,ExpDate,StagePath,StageFile)
+    AreaFraction0_120,AreaFraction1_120,AreaFraction2_120,AreaRatio_2_1_120,AreaRatio_1_0_120,DiameterLevel0_120,DiameterLevel1_120,DiameterLevel2_120, FilledArea_120,VoidArea_120,DiameterBG_120,Zd_fromRatios_120=GrayscaleRatios(Particle_X_120, Particle_Y_120, PartGrayStatsWv_120,0,255075)
+
+    SavePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'
+    
+    
+    ParticleStatsWv,ActualDiameterAll,StageXAll=LoadModelGrayScale(SavePath)
+    
+    for D0 in range(50,155,5): 
+        #D0=50
+        ParticleStatsTmp=ParticleStatsWv[np.where(ActualDiameterAll==D0),:] 
+        ParticleStatsExp=ParticleStatsTmp[0,:,:]
+        Particle_X_model=StageXAll[np.where(ActualDiameterAll==D0)]
+        AreaFraction0_model,AreaFraction1_model,AreaFraction2_model,AreaRatio_2_1_model,AreaRatio_1_0_model,DiameterLevel0_model,DiameterLevel1_model,DiameterLevel2_model, FilledArea_model, VoidArea_model,DiameterBG_model,Zd_fromRatios_model=GrayscaleRatios(Particle_X_model, Particle_X_model, ParticleStatsExp,0,255075)
+        Figurename=SavePath+'Diameter_Z0_'+str(D0)
+        
+        fig=plt.figure(figsize=(7,7))
+        PlotZ0hist(DiameterLevel1_model, Particle_X_model,50,'Model '+str(D0)+ ' μm' , 1)
+        PlotZ0hist(DiameterLevel1_60, Particle_X_60,29,'Dropgun 60 μm', 0)
+        PlotZ0hist(DiameterLevel1_90, Particle_X_90,29,'Dropgun 90 μm', 0)
+        PlotZ0hist(DiameterLevel1_120, Particle_X_120,29,'Dropgun 120 μm', 0)
+        
+        plt.xlabel('Diameter, μm')
+        plt.ylabel('Normalised frequency')
+        plt.legend()
+        plt.xlim([0,180])
+        loc = plticker.MultipleLocator(base=15)
+        plt.gca().xaxis.set_major_locator(loc)
+        plt.grid(which='major', axis='x', linestyle='-')
+        
+        Figurename=SavePath+'Diameter_Z0_'+str(D0)+'.png'
+        plt.savefig(Figurename,dpi=200)
+        plt.close(fig) 
+
+ #_________________________________________________________________________________________
+
+
+def PlotZ0hist(DiameterLevel1, Particle_X,X_centre, Label, Bar):
+    
+    #DiameterLevel1_Z0=DiameterLevel1[Particle_X<(X_centre-0.5) or Particle_X>(X_centre+0.5)]
+    DiameterLevel1_Z0=DiameterLevel1[np.logical_and(Particle_X>(X_centre-0.1),Particle_X<(X_centre+0.1))]
+    DiameterLevel1_noNan = DiameterLevel1_Z0[~np.isnan(DiameterLevel1_Z0)]
+    SizeBinsEdge=np.linspace(7.5,967.5,num=65)
+    SizeBinsMid= (SizeBinsEdge[0:-1:1]+SizeBinsEdge[1::1])/2
+    #print(np.nansum(DiameterLevel1_Z0))
+    
+    if  not np.isnan(np.sum(DiameterLevel1_noNan)) :
+        #print('test')
+        D_hist, notused=np.histogram(DiameterLevel1_noNan, bins=SizeBinsEdge) 
+        D_hist= D_hist / np.sum(D_hist)
+        
+        #fig=plt.figure(figsize=(7,7))
+        if Bar == 1: 
+            plt.bar(SizeBinsMid, D_hist, width=7.5, color='grey', label=Label)
+        else :
+            plt.plot(SizeBinsMid, D_hist, '-D', label=Label)    
+        
+        #plt.xlabel('Diameter, μm')
+        #plt.ylabel('Counts')
+        #plt.legend()
+        #plt.xlim([0,180])
+        
+        #if SavePath != 0 :
+        
+        #Spacing between each line
+        #intervals = float(sys.argv[1])
+
+        #loc = plticker.MultipleLocator(base=15)
+        #plt.gca().xaxis.set_major_locator(loc)
+        #ax.yaxis.set_major_locator(loc)
+        #plt.grid(which='major', axis='x', linestyle='-')
+        
+
+    
+    

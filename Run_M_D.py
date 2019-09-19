@@ -17,26 +17,25 @@ from MyFunctions import LoadCoreCloud,loadFAAMCore,LoadNevzorov, Average_nPts_2D
 from MyFunctions import Average_nPts,Average_nPts_datetime,DateTime2IgorTime,ChangeTimeBaseAvg,ChangeTimeBase2DAvg
 
 from PICASSO_functions import PlotCrossSections2CHB,PlotCrossSections, LoadFlightData2Dict, DataPaths,PlotFlightSummary, AverageFlightDict,CompareIWC,PlotFlight,BatchPlotCDPCore,TrackPlot
-from PICASSO_functions import AddRadar2FlightDict,Plot_TvsHI, LoadFlightSummaryCSV, PSD_runs_dict,CompositePSD, SingleRunPSD, CalculateMVD, LoadRadar, Colocate, PlotRadar, BinAverage2D
+from PICASSO_functions import AddRadar2FlightDict,Plot_TvsHI, LoadFlightSummaryCSV, PSD_runs_dict,CompositePSD, SingleRunPSD_v2, LoadRadar, Colocate, PlotRadar, BinAverage2D
  
-from Mass_Dimension import a_b_MonteCarlo_hist,Find_a_b_MonteCarlo,Find_a_b,BrownFrancis
+from Mass_Dimension import a_b_MonteCarlo_hist,Find_a_b_MonteCarlo,Find_a_b,BrownFrancis, Calculate_a_b_Avg
 
 
 PathDict=DataPaths() 
-FlightDict_C081=LoadFlightData2Dict(1,1,1,'C081',PathDict)
-AddRadar2FlightDict(FlightDict_C081)
-CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
-CSVName='flight-sum_faam_20180213_r0_c081.csv'
+FlightDict_C081=LoadFlightData2Dict(0,1,1,1,1,'C081',PathDict)
+AddRadar2FlightDict(FlightDict_C081,'C081',PathDict)
+aOptimise_array, bOptimise_array, aFit_array, bFit_array, EffectiveDiameter, VolumeMeanDiameter=Calculate_a_b_Avg(FlightDict_C081)
 
-
+#Reflectivity_Avg, IWC_g_m3_Avg, TimeAvg_mid= Calculate_a_b_Avg(FlightDict_C081)
+#CSVPath='C:/Users/Admin TEMP/Documents/PICASSO/Flights/FAAM_Data/c081-feb-13/'
+#CSVName='flight-sum_faam_20180213_r0_c081.csv'
 #Filename='20180213_0552_CAMRA_RHI.nc'
 #Filename='20180213_0652_CAMRA_RHI.nc'
-Filename='20180213_0734_CAMRA_RHI.nc'
-RadarData, ZED_H_1D,Distance_1D,Altitude_1D, Range, Elevation=LoadRadar(Filename)
-Distance2CHB, FlightTrack_ZED_H, LAT, LON, ALT,Time_Core,ZED_H_grid, DistanceBins, AltitudeBins = Colocate(FlightDict_C081,ZED_H_1D,Distance_1D,Altitude_1D,Filename.replace('.nc','.png'))
-
-IWC_avg_colocate, IWC_avg, Zed_Alt_avg, Zed_1D_avg, Zed_colocate_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr= SingleRunPSD(7,FlightDict_C081,FlightTrack_ZED_H,AltitudeBins,ZED_H_grid,CSVPath,CSVName)
+#Filename='20180213_0734_CAMRA_RHI.nc'
+#RadarData, ZED_H_1D,Distance_1D,Altitude_1D, Range, Elevation=LoadRadar(Filename)
+#Distance2CHB, FlightTrack_ZED_H, LAT, LON, ALT,Time_Core,ZED_H_grid, DistanceBins, AltitudeBins = Colocate(FlightDict_C081,ZED_H_1D,Distance_1D,Altitude_1D,Filename.replace('.nc','.png'))
+#IWC_avg_colocate, IWC_avg, Zed_1D_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr= SingleRunPSD_v2(7,FlightDict_C081,CSVPath,CSVName)
 #Find_a_b(CSVPath,IWC_avg_colocate, Zed_1D_avg, CompositeSize, Composite_dN, Composite_dNdDp,RunStr)
-
-aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random =Find_a_b_MonteCarlo(CSVPath,IWC_avg_colocate, Zed_1D_avg,CompositeSize, Composite_dN, Composite_dNdDp,RunStr)
-a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random,RunStr)
+#aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random =Find_a_b_MonteCarlo(CSVPath,IWC_avg_colocate, Zed_1D_avg,CompositeSize, Composite_dN, Composite_dNdDp,RunStr)
+#a_b_MonteCarlo_hist(aFit_array, bFit_array, aOpt_array, bOpt_array, IWC_random, Z_random,RunStr,0)

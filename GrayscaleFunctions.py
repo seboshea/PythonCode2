@@ -15,7 +15,7 @@ import scipy.io as sio
 import matplotlib.pyplot as plt  
 import matplotlib.dates as mdates
 import matplotlib.colors as colors
-from matplotlib.mlab import bivariate_normal
+#from matplotlib.mlab import bivariate_normal
 from matplotlib.dates import DateFormatter
 import os
 import gc
@@ -198,6 +198,40 @@ def GetIAT_vector(ParticleTime,ParticleTimesWv):
         IAT[i]=GetIAT(ParticleTimesWv,i,len(IAT)-1)
     return IAT
 
+
+
+#_______________________________________________________________________________________  
+# gets IAT if times are in seconds. Rather than using ParticleTimesWv
+    
+def GetIAT_TimeInS_vector(Seconds):
+    IAT=np.zeros(len(Seconds))
+    for i in range (len(IAT)-1):
+        IAT[i]=GetIAT_TimeInS(Seconds,i)
+    return IAT
+
+#_______________________________________________________________________________________  
+
+
+def GetIAT_TimeInS(Seconds,row):
+    
+	
+    
+    t1= -np.inf
+    t2= Seconds[row]
+    t3= np.inf
+	
+    if(row>0):
+        t1=Seconds[row-1]
+	
+    if(row<(len(Seconds)-1)):
+        t3=Seconds[row+1]
+        
+    IAT1=t2-t1
+    IAT2=t3-t2
+	
+    return min(IAT1,IAT2)
+
+#_______________________________________________________________________________________
 
 
 #_______________________________________________________________________________________
@@ -525,6 +559,171 @@ def DLow_D0_Zd_Table(Model_Stats, SaveFile, FileName):
     
     return DLow_D0_means_int,  BinsMid_int
 
+
+#_______________________________________________________________________________________
+
+def Plot_grayscalePSD_dict(PSD_dict):
+    CDP_BinCentre, CDP_dNdDp_L_avg = PSD_dict['CDP']
+    PSD_SizeMid, SizeWidth, PSD_avg_dNdDp4, CountUncertainty4  = PSD_dict['Zd 4']
+    PSD_SizeMid, SizeWidth, PSD_avg_dNdDp5, CountUncertainty5 = PSD_dict['Zd 5']
+    PSD_SizeMid, SizeWidth, PSD_avg_dNdDp6, CountUncertainty6 = PSD_dict['Zd 6']
+    PSD_SizeMid, SizeWidth, PSD_avg_dNdDp7, CountUncertainty7 = PSD_dict['Zd 7']
+    PSD_SizeMid, SizeWidth, PSD_avg_dNdDp8, CountUncertainty8 = PSD_dict['Zd 8']
+    PSD_SizeMid, SizeWidth, PSD_avg_dNdDpAll, CountUncertaintyAll = PSD_dict['Zd all']
+    #SizeMid=np.linspace (15,960,64)
+    #CountUncertainty=  PSD_avg_dNdDp / np.sqrt(Counts)
+    #plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp,yerr=(CountUncertainty/2), label='Z$_{d}$ < '+str(i))
+    
+    
+    
+    fig=plt.figure(figsize=(12,6))
+    plt.rcParams.update({'font.size': 12})
+    
+    plt.subplot(1, 2, 1)
+    
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp4,yerr=(CountUncertainty4/2), label='Z$_{d}$ < 4') 
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp5,yerr=(CountUncertainty5/2), label='Z$_{d}$ < 5')
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp6,yerr=(CountUncertainty6/2), label='Z$_{d}$ < 6')
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp7,yerr=(CountUncertainty7/2), label='Z$_{d}$ < 7')
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp8,yerr=(CountUncertainty8/2), label='Z$_{d}$ < 8')    
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDpAll,yerr=(CountUncertaintyAll/2), label='Z$_{d}$ < 8.4')
+    plt.plot(CDP_BinCentre, CDP_dNdDp_L_avg,'o',markersize=4, label='CDP')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel('Diameter, μm')
+    plt.ylabel('dN dDp$^{-1}$, L$^{-1}$ μm$^{-1}$')
+    #plt.ylabel('Counts')
+    #plt.legend()
+    #plt.title(PltTitle)
+    #plt.savefig(GSpath+PltTitle,dpi=200)
+    
+    plt.subplot(1, 2, 2)
+    
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp4,yerr=(CountUncertainty4/2), label='Z$_{d}$ < 4') 
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp5,yerr=(CountUncertainty5/2), label='Z$_{d}$ < 5')
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp6,yerr=(CountUncertainty6/2), label='Z$_{d}$ < 6')
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp7,yerr=(CountUncertainty7/2), label='Z$_{d}$ < 7')
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp8,yerr=(CountUncertainty8/2), label='Z$_{d}$ < 8')    
+    plt.errorbar(PSD_SizeMid,PSD_avg_dNdDpAll,yerr=(CountUncertaintyAll/2), label='Z$_{d}$ < 8.4')
+    plt.plot(CDP_BinCentre, CDP_dNdDp_L_avg,'o',markersize=4,label='CDP')
+    plt.legend()
+    #plt.xscale('log')
+    #plt.yscale('log')
+    plt.xlabel('Diameter, μm')
+    plt.ylabel('dN dDp$^{-1}$, L$^{-1}$ μm$^{-1}$')
+    plt.xlim([0,100])
+    plt.ylim([0,40])
+    
+    #plt.savefig(GSpath+PltTitle,dpi=200)
+    GSpath='C:/Users/Admin TEMP/Documents/Clarify/C052/OasisOut/Imagefile_1CIP Grayscale_20170905163107/'
+    PltTitle='C052_1642'
+    plt.savefig(GSpath+PltTitle,dpi=200)
+    
+#_______________________________________________________________________________________
+    
+## Clarify flight C052  ********************************
+    
+def Clarify_C052_grayscalePSD_v2():
+    DLow_D0_Zd_Table= 'C:/Users/Admin TEMP/Documents/DropletGun/D25_D0_Zd.hdf5'
+    ExpDate= datetime.datetime(2017, 9, 5, 0, 0, 0)
+    
+    GSpath='C:/Users/Admin TEMP/Documents/Clarify/C052/OasisOutCIP/Imagefile_1CIP Grayscale_20170905163107/'
+    #PltTitle='C052_1642'
+    StartAvg=datetime.datetime(2017, 9, 5, 16, 42, 10)
+    EndAvg=datetime.datetime(2017, 9, 5, 16, 43, 15)
+    #EndAvg=datetime.datetime(2017, 9, 5, 16, 42, 33)
+    
+    
+    #GSpath='C:/Users/Admin TEMP/Documents/Clarify/C052/OasisOut/Imagefile_1CIP Grayscale_20170905140314/'
+    #PltTitle='C052_1608'
+    #StartAvg=datetime.datetime(2017, 9, 5, 16, 8, 40)
+    #StartAvg=datetime.datetime(2017, 9, 5, 16, 10, 11)
+    #EndAvg=datetime.datetime(2017, 9, 5, 16, 11, 10)
+    
+    #PltTitle='C052_1556'
+    #StartAvg=datetime.datetime(2017, 9, 5, 15, 55, 56)
+    #StartAvg=datetime.datetime(2017, 9, 5, 15, 56, 22)
+    #EndAvg=datetime.datetime(2017, 9, 5, 15, 56, 27)
+    
+    
+    #ParticleStatsWv, ParticleTime,ParticleTimesWv= LoadGrayScaleStats(GSpath,ExpDate)
+    #AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea, VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(0,0,ParticleStatsWv,1,405070)
+    #D_KorolevCorr= KorolevCorrectedD(FilledArea, VoidArea,DiameterBG)
+    #D_ReuterBakan= ReuterBakanDiameter(DiameterLevel0,AreaFraction0)
+
+    #SaveGrayscaleOutput(GSpath,ExpDate,405070)
+    
+    Data_h5 = h5py.File(GSpath+'GrayscaleOutput.h5', 'r')              
+    
+    
+    #NParticles=np.array(Data_h5['NParticles'])
+    #h5f.create_dataset('ParticleTime', data=ParticleTime)
+    ParticleTimesWv=np.array(Data_h5['ParticleTimesWv'])
+    ParticleTime=[ExpDate + datetime.timedelta(seconds=int(ParticleTimesWv[x][0])) for x in range(len(ParticleTimesWv))]
+    D_KorolevCorr=np.array(Data_h5['D_KorolevCorr'])
+    #DiameterBG=np.array(Data_h5['DiameterBG'])
+    Zd_fromRatios=np.array(Data_h5['Zd_fromRatios'])
+    Data_h5.close()
+    
+    
+    #fig=plt.figure(figsize=(10,10))
+    #plt.rcParams.update({'font.size': 16})
+    
+    C052_data={}
+    # Zd filtering
+    for i in range(4,9,1):
+        PSD_L, Counts_PSD, PSD_SizeMid, PSD_MidTime=ParticlesStats2PSD_v2(StartAvg, EndAvg, ParticleTime,ParticleTimesWv,D_KorolevCorr,Zd_fromRatios,i,i,0,70,DLow_D0_Zd_Table)
+        SizeWidth, PSD_avg_dNdDp, PSD_avg, Counts=Avg_dndDp_CountStats(StartAvg,EndAvg,PSD_L,Counts_PSD, PSD_MidTime, PSD_SizeMid)
+        CountUncertainty=  PSD_avg_dNdDp / np.sqrt(Counts)
+        #plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp,yerr=(CountUncertainty/2), label='Z$_{d}$ < '+str(i))        
+        #C052_data['Zd '+str(i)]=Avg_dndDp_CountStats(StartAvg,EndAvg,PSD_L,Counts_PSD, PSD_MidTime, PSD_SizeMid)
+        C052_data['Zd '+str(i)] = [PSD_SizeMid, SizeWidth, PSD_avg_dNdDp, CountUncertainty]
+        
+    # No Zd filtering
+    PSD_L, Counts_PSD, PSD_SizeMid, PSD_MidTime=ParticlesStats2PSD_v2(StartAvg, EndAvg, ParticleTime,ParticleTimesWv,D_KorolevCorr,Zd_fromRatios,1E6,8.4,0,70,DLow_D0_Zd_Table)
+    SizeWidth, PSD_avg_dNdDp, PSD_avg, Counts=Avg_dndDp_CountStats(StartAvg,EndAvg,PSD_L,Counts_PSD, PSD_MidTime, PSD_SizeMid)
+    CountUncertainty=  PSD_avg_dNdDp / np.sqrt(Counts)
+    #plt.plot(PSD_SizeMid,Counts,label='c=8, no max Zd')
+    #plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp,yerr=(CountUncertainty/2), label='Z$_{d}$ < 8.4') 
+    #C052_data['Zd all']=Avg_dndDp_CountStats(StartAvg,EndAvg,PSD_L,Counts_PSD, PSD_MidTime, PSD_SizeMid)
+    C052_data['Zd all'] = [PSD_SizeMid, SizeWidth, PSD_avg_dNdDp, CountUncertainty]   
+
+    
+    # Particles per image filtering
+    #PSD_L, Counts_PSD, PSD_SizeMid, PSD_MidTime=ParticlesStats2PSD(ParticleStatsWv, ParticleTime,ParticleTimesWv,D_KorolevCorr,Zd_fromRatios,1E6,7,1,70)
+    #SizeWidth, PSD_avg_dNdDp, PSD_avg, Counts=Avg_dndDp_CountStats(StartAvg,EndAvg,PSD_L,Counts_PSD, PSD_MidTime, PSD_SizeMid)
+    #plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp,yerr=(CountUncertainty/2), label='c=7, no max Zd, 1 particle per image')
+
+
+    #NParticles=np.array(PartGrayStatsWv[:,0])
+
+    # Reuter and Bakan diameter
+    #PSD_L, Counts_PSD, PSD_SizeMid, PSD_MidTime=ParticlesStats2PSD(ParticleStatsWv, ParticleTime,ParticleTimesWv,D_ReuterBakan,Zd_fromRatios,1E6,8,0,70,DLow_D0_Zd_Table)
+    #SizeWidth, PSD_avg_dNdDp, PSD_avg, Counts=Avg_dndDp_CountStats(StartAvg,EndAvg,PSD_L,Counts_PSD, PSD_MidTime, PSD_SizeMid)
+    #plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp,yerr=(CountUncertainty/2), label='Reuter & Bakan (1997)') 
+
+
+    CoreCloudFile='core-cloud-phy_faam_20170905_v501_r0_c052_pcasp1.nc'
+    CoreCloudPath='C:/Users/Admin TEMP/Documents/Clarify/C052/'
+    CdpCalPath='C:/Users/Admin TEMP/Documents/Clarify/'
+    CdpCalFile='IAN_CDPbins_formatted.csv'   
+    C052_data['CDP']= Avg_CDP_dndDp(StartAvg,EndAvg,CoreCloudPath,CoreCloudFile,CdpCalPath,CdpCalFile)
+    #plt.plot(CDP_BinCentre, CDP_dNdDp_L_avg,'o',label='CDP')
+    
+
+#    #plt.plot()
+#    plt.xscale('log')
+#    plt.yscale('log')
+#    plt.xlabel('Diameter, μm')
+#    plt.ylabel('dN dDp$^{-1}$, L$^{-1}$ μm$^{-1}$')
+#    #plt.ylabel('Counts')
+#    plt.legend()
+#    #plt.title(PltTitle)
+#    plt.savefig(GSpath+PltTitle,dpi=200)
+    
+    return C052_data
+
+
 #_______________________________________________________________________________________
     
 ## Clarify flight C052  ********************************
@@ -533,7 +732,7 @@ def Clarify_C052_grayscalePSD():
     DLow_D0_Zd_Table= 'C:/Users/Admin TEMP/Documents/DropletGun/D25_D0_Zd.hdf5'
     ExpDate= datetime.datetime(2017, 9, 5, 0, 0, 0)
     
-    GSpath='C:/Users/Admin TEMP/Documents/Clarify/C052/OasisOut/Imagefile_1CIP Grayscale_20170905163107/'
+    GSpath='C:/Users/Admin TEMP/Documents/Clarify/C052/OasisOutCIP/Imagefile_1CIP Grayscale_20170905163107/'
     PltTitle='C052_1642'
     StartAvg=datetime.datetime(2017, 9, 5, 16, 42, 10)
     EndAvg=datetime.datetime(2017, 9, 5, 16, 43, 15)
@@ -574,15 +773,17 @@ def Clarify_C052_grayscalePSD():
     
     fig=plt.figure(figsize=(10,10))
     plt.rcParams.update({'font.size': 16})
-
+    
+    C052_data={}
     # Zd filtering
     for i in range(4,9,1):
         PSD_L, Counts_PSD, PSD_SizeMid, PSD_MidTime=ParticlesStats2PSD_v2(StartAvg, EndAvg, ParticleTime,ParticleTimesWv,D_KorolevCorr,Zd_fromRatios,i,i,0,70,DLow_D0_Zd_Table)
         SizeWidth, PSD_avg_dNdDp, PSD_avg, Counts=Avg_dndDp_CountStats(StartAvg,EndAvg,PSD_L,Counts_PSD, PSD_MidTime, PSD_SizeMid)
         CountUncertainty=  PSD_avg_dNdDp / np.sqrt(Counts)
-        #plt.plot(PSD_SizeMid,Counts,label='Zd= '+str(i))
         plt.errorbar(PSD_SizeMid,PSD_avg_dNdDp,yerr=(CountUncertainty/2), label='Z$_{d}$ < '+str(i))        
 
+        
+        
     # No Zd filtering
     PSD_L, Counts_PSD, PSD_SizeMid, PSD_MidTime=ParticlesStats2PSD_v2(StartAvg, EndAvg, ParticleTime,ParticleTimesWv,D_KorolevCorr,Zd_fromRatios,1E6,8.4,0,70,DLow_D0_Zd_Table)
     SizeWidth, PSD_avg_dNdDp, PSD_avg, Counts=Avg_dndDp_CountStats(StartAvg,EndAvg,PSD_L,Counts_PSD, PSD_MidTime, PSD_SizeMid)
@@ -1042,3 +1243,27 @@ def CompareSA_curves():
     
     
     return D_array, SA_25, SA_50
+
+
+#_______________________________________________________________________________________
+
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+#_______________________________________________________________________________________
+
+
+
+
+
