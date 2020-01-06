@@ -16,7 +16,7 @@ from DropGun import Dof_lawson
 from GrayscaleFunctions import GetZd
 from scipy import ndimage
 from skimage import filters
-from MyFunctions import BinLinearV2
+from MyFunctions import BinLinearV2, KorolevCorrectedD, BinLinear_median
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter,AutoMinorLocator
 import bisect
 import matplotlib.animation as animation
@@ -119,34 +119,32 @@ def plot_diffraction(xOAP,yOAP, ImageLow, ImageMid, ImageHigh,x, y, imageZ0, ima
     imageGreyscale = (ImageLow - ImageMid )*25 + (ImageMid - ImageHigh )*50 + (ImageHigh )*75
        
     
-    fig=plt.figure(figsize=(6,12)) 
+    fig=plt.figure(figsize=(8,8)) 
     plt.rcParams.update({'font.size': 12})
-    plt.subplot(3, 1, 1)
-    plt.title('z=0')
-    plt1=plt.pcolormesh(x,y,imageZ0, cmap='Greys_r')
-    plt1.set_clim(vmin=0, vmax=1)
-    plt.ylabel('y, μm')
-    cbar=plt.colorbar(orientation='vertical')
-    plt.ylim([-200,200])
-    plt.xlim([-200,200])
-    
-    plt.subplot(3, 1, 2)
-    plt.title('z='+str(Z) + ' μm, Zd = '+str(np.around(Zd,2)))
-    plt2=plt.pcolormesh(x,y,imageDiffraction, cmap='Greys_r', vlim=0, vmax = 1.5)
-#    plt2.set_clim(vmin=0, vmax=1.5)
-    plt.ylabel('y, μm')
-    cbar=plt.colorbar(orientation='vertical')
-    plt.ylim([-200,200])
-    plt.xlim([-200,200])
+#    plt.subplot(3, 1, 1)
+#    plt.title('z=0')
+#    plt1=plt.pcolormesh(x,y,imageZ0, cmap='Greys_r')
+#    plt1.set_clim(vmin=0, vmax=1)
+#    plt.ylabel('y, μm')
+#    cbar=plt.colorbar(orientation='vertical')
+#    plt.ylim([-200,200])
+#    plt.xlim([-200,200])
+#    
+#    plt.subplot(3, 1, 2)
+#    plt.title('z='+str(Z) + ' μm, Zd = '+str(np.around(Zd,2)))
+#    plt2=plt.pcolormesh(x,y,imageDiffraction, cmap='Greys_r', vmin=0, vmax = 1.5)
+#    plt.ylabel('y, μm')
+#    cbar=plt.colorbar(orientation='vertical')
+#    plt.ylim([-200,200])
+#    plt.xlim([-200,200])
     
     #imageDiffractionThreshold= (np.where(imageDiffraction>0.5, 1, 0))
-    plt.subplot(3, 1, 3)
-    plt.title('50% Threshold')
+#    plt.subplot(3, 1, 3)
+    plt.title('z='+str(Z/1000) + ' mm, Zd = '+str(np.around(Zd,2)))
     plt3= plt.pcolormesh(xOAP,yOAP,imageGreyscale, cmap='gist_stern_r')
     plt3.set_clim(vmin=0, vmax=75)
     plt.ylabel('y, μm')
     plt.xlabel('x, μm')
-    #plt.colorbar(orientation='vertical')
     plt.ylim([-200,200])
     plt.xlim([-200,200])
     
@@ -184,13 +182,37 @@ def Average2OAPpixels(I, x, y) :
     I_binned_75 = (np.where(I_binnned<0.25, 1, 0))
     I_binned_50 = (np.where(I_binnned<0.5, 1, 0))
     I_binned_25 = (np.where(I_binnned<0.75, 1, 0))
-
-
-
 #    plt.pcolormesh(x_bins,x_bins,I_binnned, cmap='jet')
-
     return x_bins, I_binnned, I_binned_75, I_binned_50, I_binned_25 
+
+
+#_______________________________________________________________________________________
+
+#Average AveragingFactor elements of 2D array ssuming that each dimension of the new shape is a factor of the corresponding dimension in the old one
+
+
+def AverageFactorOAPpixels(I, x, y, AveragingFactor, OAP_PixelSize) : 
+
+    I_subset=I[int(I.shape[0]/2)-1000: int(I.shape[0]/2) + 1000, int(I.shape[1]/2)-1000: int(I.shape[1]/2) + 1000]
+   
+    nsmallx = int(I_subset.shape[0] / AveragingFactor)
+    nsmally = int(I_subset.shape[1] / AveragingFactor)
+    AveragingFactor =int(AveragingFactor)
     
+    # Average to 2DS size bins
+    #I_binnned= np.mean(I_subset.reshape((I_subset.shape[0]//10,I_subset.shape[1]//10,-1)),2)
+    #I_binnned = big.reshape([nsmall, nbig//nsmall, nsmall, nbig//nsmall]).mean(3).mean(1)
+    I_binnned = I_subset.reshape([nsmallx, AveragingFactor, nsmally, AveragingFactor]).mean(3).mean(1)
+
+    x_bins = np.arange(x[int(I.shape[0]/2)-1000], x[int(I.shape[0]/2) + 1000], OAP_PixelSize)
+    y_bins = np.arange(x[int(I.shape[1]/2)-1000], x[int(I.shape[1]/2) + 1000], OAP_PixelSize)
+    
+    I_binned_75 = (np.where(I_binnned<0.25, 1, 0))
+    I_binned_50 = (np.where(I_binnned<0.5, 1, 0))
+    I_binned_25 = (np.where(I_binnned<0.75, 1, 0))
+#    plt.pcolormesh(x_bins,x_bins,I_binnned, cmap='jet')
+    return x_bins,y_bins, I_binnned, I_binned_75, I_binned_50, I_binned_25
+
 #_______________________________________________________________________________________
 #Calculate stats (diameter, area, etc) of an image
 
@@ -219,44 +241,45 @@ def ImageParticelStats(BinaryImage, OAPPixelSize):
 # THE PLOTTING WILL BE WRONG IF NOT STARTED AT z=0
 
 
-#ShapeVsZ(SavePath,'Rosette_CPI',1,CPIImagePath)
+#ShapeVsZ(SavePath,'Rosette_CPI',1,CPIImagePath,1,10)
+
+# ShapeFlag = 0 Create mask 
+# ShapeFlag = 1 Use CPI image as mask
+# ShapeFlag = 2 Use general binary image as mask   
 
 
-
-def ShapeVsZ(SavePath,Prefix,CPI_flag,CPIImagePath):
+def ShapeVsZ(SavePath,Prefix,ShapeFlag,SourceImage,PixelSizeInput,PixelSizeOutput):
     #SavePath = 'C:/Users/Admin TEMP/Documents/Diffraction/Plots/'
     #SavePath = 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/'
     #Prefix='Column20by200'
     #Prefix='Circle125'
     #Prefix= 'Rosette_CPI'
     SaveDataFlag = 1
-    PlotDataFlag = 0
-    pixel_size = 1 #um
-    Lambda= 0.658 # laser wavelength
+    PlotDataFlag = 0 
+    
+    Lambda= 0.658 # CIP laser wavelength
+    #Lambda= 0.785 # 2DS laser wavelength
+    #Zarray = np.arange(0, 100000, 10000)
+    Zarray = np.arange(0, 100000, 2000)
     #Zarray = np.arange(0, 100000, 2000)
-    Zarray = np.arange(0, 100000, 500)
     #Zarray = np.arange(0, 50000, 1000)
 
-    # Parameters    
-    x_min = -1024*pixel_size # (µm)
-    x_max = 1023*pixel_size # (µm) use 2**n for fast FFT
-    y_min = -1024*pixel_size # (µm)
-    y_max = 1023*pixel_size # (µm) use 2**n for fast FFT
-    #x_min = -512*pixel_size # (µm)
-    #x_max = 511*pixel_size # (µm) use 2**n for fast FFT
-    #y_min = -512*pixel_size # (µm)
-    #y_max = 511*pixel_size # (µm) use 2**n for fast FFT
-    x = np.arange(x_min, x_max+.001, pixel_size)
-    y = np.arange(y_min, y_max+.001, pixel_size)
-    X, Y = np.meshgrid(x, y)
 
+    # Parameters    
+    
     # Set up shape
     
-    if CPI_flag == 1 :
-        # Use CPI image as mask 
-        #CPIImagePath = 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/CPI_images/Rosette/CP20080401_204059_387_1.jpg'
-        M=LoadCpiImageMask(CPIImagePath)
-    else :
+    if ShapeFlag == 0 : 
+        
+        pixel_size = PixelSizeInput #um
+        x_min = -1024*pixel_size # (µm)
+        x_max = 1023*pixel_size # (µm) use 2**n for fast FFT
+        y_min = -1024*pixel_size # (µm)
+        y_max = 1023*pixel_size # (µm) use 2**n for fast FFT
+        x = np.arange(x_min, x_max+.001, pixel_size)
+        y = np.arange(y_min, y_max+.001, pixel_size)
+        X, Y = np.meshgrid(x, y)
+        
         ### Circle
         #D= 150 # um
         #mask = X**2 + Y**2 < (D/2)**2 # Circle
@@ -267,49 +290,88 @@ def ShapeVsZ(SavePath,Prefix,CPI_flag,CPIImagePath):
         #W=30
         #H=120
         W = 50
-        H = 200 
+        H = 300
         mask = (abs(X) < (W/2)) & (abs(Y) < (H/2)) # rectangle
-        
         M= np.ones((x.size,y.size))
         M[mask] = 0
+        pixel_size = 1
     
-
+    if ShapeFlag == 1 : # Use CPI image as mask
+        pixel_size = PixelSizeInput #um
+        x_min = -1024*pixel_size # (µm)
+        x_max = 1023*pixel_size # (µm) use 2**n for fast FFT
+        y_min = -1024*pixel_size # (µm)
+        y_max = 1023*pixel_size # (µm) use 2**n for fast FFT
+        x = np.arange(x_min, x_max+.001, pixel_size)
+        y = np.arange(y_min, y_max+.001, pixel_size)
+        X, Y = np.meshgrid(x, y)
+        #CPIImagePath = 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/CPI_images/Rosette/CP20080401_204059_387_1.jpg'
+        M=LoadCpiImageMask(SourceImage)
+        pixel_size = 1
+    
+    if ShapeFlag == 2 : # Use general binary image as mask
+        pixel_size = PixelSizeInput #um
+        #pixel_size = 0.89 #um
+        #pixel_size = 1 #um
+        #pixel_size = 0.57 #um
+        x_min = -1024*pixel_size # (µm)
+        x_max = 1023*pixel_size # (µm) use 2**n for fast FFT
+        y_min = -1024*pixel_size # (µm)
+        y_max = 1023*pixel_size # (µm) use 2**n for fast FFT
+        x = np.arange(x_min, x_max+.001, pixel_size)
+        y = np.arange(y_min, y_max+.001, pixel_size)
+        X, Y = np.meshgrid(x, y)
+        M = SourceImage
+        
     
     # These areas and diameter are for all pixels where the drop in light intestiy is greater than threshold.
     # Be aware of this when comparing with OShea AMT 2019. 
-    DiameterLevel0=np.zeros(len(Zarray))
-    DiameterLevel1=np.zeros(len(Zarray))
-    DiameterLevel2=np.zeros(len(Zarray))
-    Area0 =np.zeros(len(Zarray)) 
-    Area1 =np.zeros(len(Zarray))
-    Area2 =np.zeros(len(Zarray))
-    Circularity0 =np.zeros(len(Zarray)) 
-    Circularity1 =np.zeros(len(Zarray))
-    Circularity2 =np.zeros(len(Zarray))
+    DiameterLevel0_BG=np.zeros(len(Zarray))
+    DiameterLevel1_BG=np.zeros(len(Zarray))
+    DiameterLevel2_BG=np.zeros(len(Zarray))
+    Area0_BG =np.zeros(len(Zarray)) 
+    Area1_BG =np.zeros(len(Zarray))
+    Area2_BG =np.zeros(len(Zarray))
+    Area0_Filled =np.zeros(len(Zarray)) 
+    Area1_Filled =np.zeros(len(Zarray))
+    Area2_Filled =np.zeros(len(Zarray))
+    Circularity0_filled =np.zeros(len(Zarray)) 
+    Circularity1_filled =np.zeros(len(Zarray))
+    Circularity2_filled =np.zeros(len(Zarray))
     BoxDiameterLevel0=np.zeros(len(Zarray))
     BoxDiameterLevel1=np.zeros(len(Zarray))
     BoxDiameterLevel2=np.zeros(len(Zarray))
+    DiameterBGy1=np.zeros(len(Zarray))
+    DiameterBGx1=np.zeros(len(Zarray))
+    Area_BBoxLevel0=np.zeros(len(Zarray))
+    Area_BBoxLevel1=np.zeros(len(Zarray))
+    Area_BBoxLevel2=np.zeros(len(Zarray))
     
     #Z= 10000 # distance from object plane um
     for i in range(len(Zarray)):
         Z= Zarray[i]
         I, A0, fx, fy = compute_diffraction(Z, Lambda, pixel_size, x, y, X, Y, M,0)
-        xOAP, I_binnned, I_binned_75, I_binned_50, I_binned_25= Average2OAPpixels(I, x, y)
-        DiameterLevel0[i], Area0[i], Circularity0[i],BoxDiameterLevel0[i]= ImageParticleMoreStats(I_binned_25, 10)
-        DiameterLevel1[i], Area1[i], Circularity1[i],BoxDiameterLevel1[i]= ImageParticleMoreStats(I_binned_50, 10)
-        DiameterLevel2[i], Area2[i], Circularity2[i],BoxDiameterLevel2[i]= ImageParticleMoreStats(I_binned_75, 10)
-        if PlotDataFlag == 1 : 
-            Figurename=SavePath+Prefix+'at'+str(Z)+'.png.'
-            D0 = DiameterLevel1[0]
-            Zd_true = (4 * Lambda * Z) / ((D0)**2) 
-            plot_diffraction(xOAP, xOAP, I_binned_25, I_binned_50,I_binned_75,x,y, M,I,A0, fx, fy, Z,Zd_true, 1, Figurename)
+        #xOAP, I_binnned, I_binned_75, I_binned_50, I_binned_25= Average2OAPpixels(I, x, y)
+        #OAP_PixelSize = 0.57
+        #OAP_PixelSize = pixel_size
+        AveragingFactor = PixelSizeOutput / pixel_size # This needs to be an integer
+        xOAP, yOAP, I_binnned, I_binned_75, I_binned_50, I_binned_25= AverageFactorOAPpixels(I, x, y, AveragingFactor, PixelSizeOutput)
+        DiameterLevel0_BG[i], Area0_BG[i], tmp, tmp, Circularity0_filled[i],BoxDiameterLevel0[i], Area_BBoxLevel0[i], Area0_Filled[i] = ImageParticleMoreStats(I_binned_25, PixelSizeOutput)
+        DiameterLevel1_BG[i], Area1_BG[i], DiameterBGx1[i],DiameterBGy1[i], Circularity1_filled[i],BoxDiameterLevel1[i],Area_BBoxLevel1[i], Area1_Filled[i] = ImageParticleMoreStats(I_binned_50, PixelSizeOutput)
+        DiameterLevel2_BG[i], Area2_BG[i], tmp, tmp, Circularity2_filled[i],BoxDiameterLevel2[i],Area_BBoxLevel2[i], Area2_Filled[i] = ImageParticleMoreStats(I_binned_75, PixelSizeOutput)
+        D0 = DiameterLevel1_BG[0]
+        if PlotDataFlag == 1 :
+            if i % 2 == 0 : 
+                Figurename=SavePath+Prefix+'at'+str(Z)+'.png.'
+                Zd_true = (4 * Lambda * Z) / ((D0)**2) 
+                plot_diffraction(xOAP, yOAP, I_binned_25, I_binned_50,I_binned_75,x,y, M,I,A0, fx, fy, Z,Zd_true, 1, Figurename)
 
     
         #x_bins, I_binnned, I_binned_75, I_binned_50, I_binned_25= Average2OAPpixels(I, x,y)
     
-    AreaFraction0=(Area0-Area1)/Area0 # Alow notation from OShea AMT 2019   
-    AreaFraction1=(Area1-Area2)/Area0 # Amid
-    AreaFraction2=Area2/Area0 # Ahigh   
+    AreaFraction0=(Area0_BG-Area1_BG)/Area0_BG # Alow notation from OShea AMT 2019   
+    AreaFraction1=(Area1_BG-Area2_BG)/Area0_BG # Amid
+    AreaFraction2=Area2_BG/Area0_BG # Ahigh   
     
     if SaveDataFlag == 1 : 
         #FileName= 'Column50by200.h5'
@@ -322,18 +384,30 @@ def ShapeVsZ(SavePath,Prefix,CPI_flag,CPIImagePath):
         h5f = h5py.File(SavePath+FileName, 'w')
     
         h5f.create_dataset('Zarray', data=Zarray)
-        h5f.create_dataset('DiameterLevel0', data=DiameterLevel0)
-        h5f.create_dataset('DiameterLevel1', data=DiameterLevel1)
-        h5f.create_dataset('DiameterLevel2', data=DiameterLevel2)
+        h5f.create_dataset('DiameterLevel0', data=DiameterLevel0_BG)
+        h5f.create_dataset('DiameterLevel1', data=DiameterLevel1_BG)
+        h5f.create_dataset('DiameterLevel2', data=DiameterLevel2_BG)
         h5f.create_dataset('AreaFraction0', data=AreaFraction0)
         h5f.create_dataset('AreaFraction1', data=AreaFraction1)
         h5f.create_dataset('AreaFraction2', data=AreaFraction2)
-        h5f.create_dataset('Circularity0', data=Circularity0)
-        h5f.create_dataset('Circularity1', data=Circularity1)
-        h5f.create_dataset('Circularity2', data=Circularity2)
+        h5f.create_dataset('Circularity0_filled', data=Circularity0_filled)
+        h5f.create_dataset('Circularity1_filled', data=Circularity1_filled)
+        h5f.create_dataset('Circularity2_filled', data=Circularity2_filled)
         h5f.create_dataset('BoxDiameterLevel0',data=BoxDiameterLevel0)
         h5f.create_dataset('BoxDiameterLevel1',data=BoxDiameterLevel1)
         h5f.create_dataset('BoxDiameterLevel2',data=BoxDiameterLevel2)
+        h5f.create_dataset('Area0_Filled',data=Area0_Filled)
+        h5f.create_dataset('Area1_Filled',data=Area1_Filled)
+        h5f.create_dataset('Area2_Filled',data=Area2_Filled)
+        h5f.create_dataset('Area0_BG',data=Area0_BG)
+        h5f.create_dataset('Area1_BG',data=Area1_BG)
+        h5f.create_dataset('Area2_BG',data=Area2_BG)
+        h5f.create_dataset('DiameterBGx1',data=DiameterBGx1)
+        h5f.create_dataset('DiameterBGy1',data=DiameterBGy1)
+        h5f.create_dataset('Area_BBoxLevel0',data=Area_BBoxLevel0)
+        h5f.create_dataset('Area_BBoxLevel1',data=Area_BBoxLevel1)
+        h5f.create_dataset('Area_BBoxLevel2',data=Area_BBoxLevel2)
+        
         h5f.close()
 
     #return Zarray, DiameterLevel0, DiameterLevel1, DiameterLevel2,AreaFraction0, AreaFraction1, AreaFraction2
@@ -470,27 +544,38 @@ def ImageParticleMoreStats(BinaryImage, OAPPixelSize):
         #all particles in image
         BoxStats = regionprops(BinaryImage, cache=False)
         Boxbbox = [r.bbox for r in BoxStats]
-        BoxMeanXY = OAPPixelSize * (Boxbbox[0][2] - Boxbbox[0][0] + Boxbbox[0][3] - Boxbbox[0][1]) / 2
+        MeanXY = OAPPixelSize * (Boxbbox[0][2] - Boxbbox[0][0] + Boxbbox[0][3] - Boxbbox[0][1]) / 2
+        Area_BBox = BoxStats[0].area
         
         #select largest particle in images
         labels_max= SelectLargestParticle(BinaryImage)
         stats = regionprops(labels_max, cache=False)
         bbox = [r.bbox for r in stats]                     
-        MeanXY = OAPPixelSize * (bbox[0][2] - bbox[0][0] + bbox[0][3] - bbox[0][1]) / 2
-        Area= [r.area for r in stats]
-        Area=Area[0] # pixels     
+        MeanXY_BG = OAPPixelSize * (bbox[0][2] - bbox[0][0] + bbox[0][3] - bbox[0][1]) / 2
+        DiameterBGx = OAPPixelSize * (bbox[0][3] - bbox[0][1])
+        DiameterBGy = OAPPixelSize * (bbox[0][2] - bbox[0][0])
+        #Area_BG= [r.area for r in stats]
+        #Area_BG=Area_BG[0] # pixels     
+        Area_BG = stats[0].area
         
         #fill internal voids largest particle in image
         FilledImage = ndimage.morphology.binary_fill_holes(labels_max).astype(int) # fill internal voids for circularity 
         FilledStats = regionprops(FilledImage, cache=False) 
-        Circularity = FilledStats[0].perimeter** 2 / (4 * np.pi * FilledStats[0].area )
-    else: 
-        MeanXY =0
-        Area = 0
-        Circularity = np.nan
-        BoxMeanXY= 0
+        Circularity_Filled = FilledStats[0].perimeter** 2 / (4 * np.pi * FilledStats[0].area )
+        #Area_Filled = [r.area for r in stats]
+        Area_Filled = FilledStats[0].area
+    else:
         
-    return MeanXY, Area, Circularity, BoxMeanXY
+        MeanXY_BG =0
+        Area_BG =0
+        DiameterBGx =0
+        DiameterBGy =0
+        Circularity_Filled =np.nan
+        MeanXY =0
+        Area_Filled = 0
+        Area_BBox = 0
+        
+    return MeanXY_BG, Area_BG, DiameterBGx,DiameterBGy, Circularity_Filled, MeanXY,Area_BBox, Area_Filled
 #
 #
 #for region in regionprops(label_image):
@@ -611,39 +696,47 @@ def BatchCPI_ShapeVsZ():
                     print(ImageName)    
                     Prefix=ImageName.replace('.jpg', '')
                     CPIImagePath=CPIPath+filena+'/'+ImageName
-                    ShapeVsZ(CPIPath+filena+'/',Prefix,1,CPIImagePath)
+                    ShapeVsZ(CPIPath+filena+'/',Prefix,1,CPIImagePath,1,10)
+
+
+#ShapeVsZ(SavePath,Prefix,ShapeFlag,SourceImage,PixelSizeInput,PixelSizeOutput)
 
 #_______________________________________________________________________________________
 
+#Plot the CPI greyscale ratios vs z
+                    
 
-def PlotALLCPI_ShapeVsZ():
+
+def PlotALLCPI_ShapeVsZ_bg():
 
     
     fig=plt.figure(figsize=(10,10)) 
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 14})
     panel1= plt.subplot(2, 2, 1)    
     plt.ylabel('D / D$_{0}$')
-    plt.xlabel('Zd')
-    plt.xlim([0,9])
-    
+    #plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,2.5])
     
     panel2=plt.subplot(2, 2, 2)
     plt.ylabel('A$_{25-50}$ / A$_{25-100}$')
-    plt.xlabel('Zd')
-    plt.xlim([0,9])
+    #plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
 
     panel3=plt.subplot(2, 2, 3)
     
     plt.ylabel('A$_{50-75}$ / A$_{25-100}$')
-    plt.xlabel('Zd')
-    plt.xlim([0,9])
-
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
+    
     panel4=plt.subplot(2, 2, 4)
     
     plt.ylabel('A$_{75-100}$ / A$_{25-100}$')
-    plt.xlabel('Zd')
-    plt.xlim([0,9])
-    
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
     
     
     #SavePath = 'C:/Users/Admin TEMP/Documents/Diffraction/Plots/'
@@ -658,7 +751,7 @@ def PlotALLCPI_ShapeVsZ():
         #if filena.endswith(".h5"):
         print(filena)
         j=0
-        LW = 0.2
+        LW = 0.1
         for ImageName in os.listdir(CPIPath+filena):
                 if ImageName.endswith(".h5"):
                     print(ImageName)    
@@ -679,31 +772,49 @@ def PlotALLCPI_ShapeVsZ():
                     Zd_true = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
                     D_D0 = DiameterLevel1 / D0
         
-                    if j == 0  :
-                        panel1.plot(Zd_true, D_D0,color=ColourList[i],label=filena,linewidth=LW)
-                        panel2.plot(Zd_true, AreaFraction0,color=ColourList[i],label=filena,linewidth=LW)
-                        panel3.plot(Zd_true, AreaFraction1,color=ColourList[i],label=filena,linewidth=LW)
-                        panel4.plot(Zd_true, AreaFraction2,color=ColourList[i],label=filena,linewidth=LW)
-                    else :
-                        panel1.plot(Zd_true, D_D0,color=ColourList[i],linewidth=LW)
-                        panel2.plot(Zd_true, AreaFraction0,color=ColourList[i],linewidth=LW)
-                        panel3.plot(Zd_true, AreaFraction1,color=ColourList[i],linewidth=LW)
-                        panel4.plot(Zd_true, AreaFraction2,color=ColourList[i],linewidth=LW)               
+#                    if j == 0  :
+#                        panel1.plot(Zd_true, D_D0,color=ColourList[i],label=filena,linewidth=LW)
+#                        panel2.plot(Zd_true, AreaFraction0,color=ColourList[i],label=filena,linewidth=LW)
+#                        panel3.plot(Zd_true, AreaFraction1,color=ColourList[i],label=filena,linewidth=LW)
+#                        panel4.plot(Zd_true, AreaFraction2,color=ColourList[i],label=filena,linewidth=LW)
+#                    else :
+                        
+                    panel1.plot(Zd_true, D_D0,color='silver',linewidth=LW)
+                    panel2.plot(Zd_true, AreaFraction0,color='silver',linewidth=LW)
+                    panel3.plot(Zd_true, AreaFraction1,color='silver',linewidth=LW)
+                    panel4.plot(Zd_true, AreaFraction2,color='silver',linewidth=LW)               
                 
                 j+=1
 
         i+=1
-        
-    plt.legend()
-
-    SaveName= 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/CPIGreyscaleRatios2.png'
+    
+    Habit_D0_D_median={}
+    HabitList= {'Bullets','ColumnAgg','Columns', 'Plate', 'PlateAgg', 'QuasiSpherical', 'Rosette', 'RosetteAgg'}
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    for filena in HabitList :
+        LW=4
+        Hist,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median,D_D0_IQR, AreaFraction0Median, AreaFraction1Median, AreaFraction2Median = CPI_HabitDmeasD0PDF(CPIPath,filena,0)
+        panel1.plot(ZdBinsMid, D_D0Median,linewidth=LW, label=filena)
+        panel2.plot(ZdBinsMid, AreaFraction0Median,linewidth=LW)
+        panel3.plot(ZdBinsMid, AreaFraction1Median,linewidth=LW)
+        panel4.plot(ZdBinsMid, AreaFraction2Median,linewidth=LW, label=filena)
+        Habit_D0_D_median[filena+'_median'] = D_D0Median
+        Habit_D0_D_median[filena+'_IQR'] = D_D0_IQR
+    
+    Habit_D0_D_median['ZdBinsMid'] = ZdBinsMid
+    panel4.legend()
+    
+    
+    
+    SaveName= 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/CPIGreyscaleRatios2_BG.png'
     plt.savefig(SaveName,dpi=200)
     plt.close(fig)
 
+    return Habit_D0_D_median
 
 #_______________________________________________________________________________________
 
-#plot stats vs Zd for several particles in folder
+#plot stats vs Zd for specific habit
 
 
 def PlotHabitCPI_ShapeVsZ():
@@ -714,25 +825,25 @@ def PlotHabitCPI_ShapeVsZ():
     panel1= plt.subplot(2, 2, 1)    
     plt.ylabel('D / D$_{0}$')
     plt.xlabel('Zd')
-    plt.xlim([0,9])
+    plt.xlim([0,10])
     plt.ylim([0,2.5])
     
     panel2=plt.subplot(2, 2, 2)
     plt.ylabel('A$_{25-50}$ / A$_{25-100}$')
     plt.xlabel('Zd')
-    plt.xlim([0,9])
+    plt.xlim([0,10])
     plt.ylim([0,1])
 
     panel3=plt.subplot(2, 2, 3)
     plt.ylabel('A$_{50-75}$ / A$_{25-100}$')
     plt.xlabel('Zd')
-    plt.xlim([0,9])
+    plt.xlim([0,10])
     plt.ylim([0,1])
     
     panel4=plt.subplot(2, 2, 4)
     plt.ylabel('A$_{75-100}$ / A$_{25-100}$')
     plt.xlabel('Zd')
-    plt.xlim([0,9])
+    plt.xlim([0,10])
     plt.ylim([0,1])
     
     
@@ -836,6 +947,9 @@ def CPI_HabitDmeasD0PDF(CPIPath,filena,SavePlot):
     
     Batch_Zd=[]
     Batch_D_D0=[]
+    Batch_AreaFraction0=[]
+    Batch_AreaFraction1=[]
+    Batch_AreaFraction2=[]
     
     ZdBins_min = 0
     ZdBins_max = 10
@@ -863,11 +977,20 @@ def CPI_HabitDmeasD0PDF(CPIPath,filena,SavePlot):
             Zd = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
             D_D0 = DiameterLevel1 / D0
             D_D0[np.isnan(D_D0)]=0       
-    
+            AreaFraction0[np.isnan(AreaFraction0)] = 0
+            AreaFraction1[np.isnan(AreaFraction1)] = 0
+            AreaFraction2[np.isnan(AreaFraction2)] = 0
+            
             D_D0_interp = np.interp(ZdBins_mid,Zd,D_D0) # interpolate diameter ratio to common zd base
+            AreaFraction0_interp = np.interp(ZdBins_mid,Zd,AreaFraction0)
+            AreaFraction1_interp = np.interp(ZdBins_mid,Zd,AreaFraction1)
+            AreaFraction2_interp = np.interp(ZdBins_mid,Zd,AreaFraction2)
+            
             Batch_Zd= np.append(Batch_Zd,ZdBins_mid)
             Batch_D_D0= np.append(Batch_D_D0,D_D0_interp)
-     
+            Batch_AreaFraction0= np.append(Batch_AreaFraction0,AreaFraction0_interp)
+            Batch_AreaFraction1= np.append(Batch_AreaFraction1,AreaFraction1_interp)
+            Batch_AreaFraction2= np.append(Batch_AreaFraction2,AreaFraction2_interp)
     #Bin DataY based on DataX value. Now returns lower, upper and mid bins 
 
     D_D0Bins_min =-0.05
@@ -881,10 +1004,20 @@ def CPI_HabitDmeasD0PDF(CPIPath,filena,SavePlot):
     #median for bin
     Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_D_D0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
     D_D0Median = np.nanmedian(Output, axis=0) # median D/D0 at a given Zd
+    D_D0_IQR = np.nanpercentile(Output,75, axis=0) - np.nanpercentile(Output,25, axis=0)
     
     D_D0Bins_mid = (D_D0Bins_edge[:-1:1] + D_D0Bins_edge[1::1]) /2
     TotalPDF = np.sum(Hist/np.sum(Hist),axis=0) # D/D0 frequnecy across whole DOF
     
+    Output_AreaFraction0, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+    AreaFraction0Median = np.nanmedian(Output_AreaFraction0, axis=0) # median at a given Zd
+    
+    Output_AreaFraction1, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction1,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+    AreaFraction1Median = np.nanmedian(Output_AreaFraction1, axis=0) # median at a given Zd  
+    
+    Output_AreaFraction2, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction2,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+    AreaFraction2Median = np.nanmedian(Output_AreaFraction2, axis=0) # median at a given Zd
+
     
     if SavePlot == 1: 
         fig=plt.figure(figsize=(8,8))
@@ -919,7 +1052,7 @@ def CPI_HabitDmeasD0PDF(CPIPath,filena,SavePlot):
         plt.close(fig)
 
 
-    return PDF,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median
+    return PDF,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median,D_D0_IQR, AreaFraction0Median, AreaFraction1Median, AreaFraction2Median  
 
 
 #_______________________________________________________________________________________
@@ -932,7 +1065,7 @@ def Compare_CPI_HabitSizePDF():
     CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
     fig=plt.figure(figsize=(8,8))
     for filena in HabitList :
-        Hist,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median = CPI_HabitDmeasD0PDF(CPIPath,filena,0)
+        Hist,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid,D_D0Median,D_D0_IQR, AreaFraction0Median, AreaFraction1Median, AreaFraction2Median = CPI_HabitDmeasD0PDF(CPIPath,filena,0)
         plt.plot(ZdBinsMid, D_D0Median, label=filena)
         plt.xlabel('Z$_{d}$')
         plt.ylabel('D / D$_{0}$')
@@ -951,7 +1084,7 @@ def DmeasD0VsD0_habit(filena,SaveFlag) :
 #    filena='Rosette'
     Armwidth_mm = 70 
     CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
-    PDF,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median= CPI_HabitDmeasD0PDF(CPIPath,filena,0)
+    PDF,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median,D_D0_IQR,  AreaFraction0Median, AreaFraction1Median, AreaFraction2Median= CPI_HabitDmeasD0PDF(CPIPath,filena,0)
     #PDF Row = Zd, Column = D/D0
     D0array=np.arange(10, 1280, 10)
     D0arrayEdge= np.arange(5,1285, 10)
@@ -1080,50 +1213,52 @@ def ShapeVsZ_movie(SavePath,Prefix,CPI_flag,CPIImagePath):
         M=LoadCpiImageMask(CPIImagePath)
     else :
         ### Circle
-        D= 150 # um
-        mask = X**2 + Y**2 < (D/2)**2 # Circle
+        #D= 150 # um
+        #mask = X**2 + Y**2 < (D/2)**2 # Circle
         
         ###Rectangle
         #H=350
         #W=H/3
         #W=30
         #H=120
-        #W = 50
-        #H = 200 
-        #mask = (abs(X) < (W/2)) & (abs(Y) < (H/2)) # rectangle
+        W = 100
+        H = 400 
+        mask = (abs(X) < (W/2)) & (abs(Y) < (H/2)) # rectangle
         
         M= np.ones((x.size,y.size))
         M[mask] = 0
+        D0 = 250
     
     Ims= np.zeros((100,100,len(Zarray)))
     Zd_array = np.zeros(len(Zarray))
     
     # These areas and diameter are for all pixels where the drop in light intestiy is greater than threshold.
     # Be aware of this when comparing with OShea AMT 2019. 
-    DiameterLevel0=np.zeros(len(Zarray))
-    DiameterLevel1=np.zeros(len(Zarray))
-    DiameterLevel2=np.zeros(len(Zarray))
-    Area0 =np.zeros(len(Zarray)) 
-    Area1 =np.zeros(len(Zarray))
-    Area2 =np.zeros(len(Zarray))
-    Circularity0 =np.zeros(len(Zarray)) 
-    Circularity1 =np.zeros(len(Zarray))
-    Circularity2 =np.zeros(len(Zarray))
-    BoxDiameterLevel0=np.zeros(len(Zarray))
-    BoxDiameterLevel1=np.zeros(len(Zarray))
-    BoxDiameterLevel2=np.zeros(len(Zarray))
+#    DiameterLevel0=np.zeros(len(Zarray))
+#    DiameterLevel1=np.zeros(len(Zarray))
+#    DiameterLevel2=np.zeros(len(Zarray))
+#    Area0 =np.zeros(len(Zarray)) 
+#    Area1 =np.zeros(len(Zarray))
+#    Area2 =np.zeros(len(Zarray))
+#    Circularity0 =np.zeros(len(Zarray)) 
+#    Circularity1 =np.zeros(len(Zarray))
+#    Circularity2 =np.zeros(len(Zarray))
+#    BoxDiameterLevel0=np.zeros(len(Zarray))
+#    BoxDiameterLevel1=np.zeros(len(Zarray))
+#    BoxDiameterLevel2=np.zeros(len(Zarray))
     
     #Z= 10000 # distance from object plane um
     for i in range(len(Zarray)):
         Z= Zarray[i]
         I, A0, fx, fy = compute_diffraction(Z, Lambda, pixel_size, x, y, X, Y, M,0)
         xOAP, I_binnned, I_binned_75, I_binned_50, I_binned_25= Average2OAPpixels(I, x, y)
-        DiameterLevel0[i], Area0[i], Circularity0[i],BoxDiameterLevel0[i]= ImageParticleMoreStats(I_binned_25, 10)
-        DiameterLevel1[i], Area1[i], Circularity1[i],BoxDiameterLevel1[i]= ImageParticleMoreStats(I_binned_50, 10)
-        DiameterLevel2[i], Area2[i], Circularity2[i],BoxDiameterLevel2[i]= ImageParticleMoreStats(I_binned_75, 10)
+        #DiameterLevel0[i], Area0[i], Circularity0[i],BoxDiameterLevel0[i]= ImageParticleMoreStats(I_binned_25, 10)
+        #DiameterLevel1[i], Area1[i], Circularity1[i],BoxDiameterLevel1[i]= ImageParticleMoreStats(I_binned_50, 10)
+        #DiameterLevel2[i], Area2[i], Circularity2[i],BoxDiameterLevel2[i]= ImageParticleMoreStats(I_binned_75, 10)
          
             #Figurename=SavePath+Prefix+'at'+str(Z)+'.png.'
-        D0 = DiameterLevel1[0]
+        #D0 = DiameterLevel1[0]
+        
         Zd_array[i] = (4 * Lambda * Z) / ((D0)**2) 
             #plot_diffraction(xOAP, xOAP, I_binned_25, I_binned_50,I_binned_75,x,y, M,I,A0, fx, fy, Z,Zd_true, 0, Figurename)
             
@@ -1131,7 +1266,9 @@ def ShapeVsZ_movie(SavePath,Prefix,CPI_flag,CPIImagePath):
     
         Ims[:,:,i] = imageGreyscale
        
-    return Ims, xOAP, Zarray, Zd_array
+    ShapeVsZ_movie2(Ims, xOAP, Zarray, Zd_array,SavePath,Prefix)
+    
+    #return Ims, xOAP, Zarray, Zd_array
     
 ##_______________________________________________________________________________________
 #
@@ -1150,8 +1287,8 @@ def ShapeVsZ_movie2(Ims, xOAP, Zarray, Zd_array,SavePath,Prefix):
     plt.ylabel('y, μm')
     plt.xlabel('x, μm')
     #plt.colorbar(orientation='vertical')
-    plt.ylim([-200,200])
-    plt.xlim([-200,200])
+    plt.ylim([-300,300])
+    plt.xlim([-300,300])
     
     
     
@@ -1241,8 +1378,773 @@ def TestInversion():
 
     #return D0array,CountsRetrieved, Counts_probe
 
+###_______________________________________________________________________________________
+##  
+#    
 ##_______________________________________________________________________________________
-#  
+##calculate stats (diameter, area fraction etc) for an image as a funciton of Z
+#
+#
+##CP20080401_204059_387_1.jpg
+## THE PLOTTING WILL BE WRONG IF NOT STARTED AT z=0
+#
+#
+##ShapeVsZ(SavePath,'Rosette_CPI',1,CPIImagePath)
+#
+#
+#
+#def ShapeVsZ_Analog(BinaryImage,pixel_size):
+#
+#    SaveDataFlag = 1
+#    PlotDataFlag = 0
+#    Lambda= 0.658 # laser wavelength
+#    #Zarray = np.arange(0, 100000, 2000)
+#    Zarray = np.arange(0, 100000, 500)
+#    #Zarray = np.arange(0, 50000, 1000)
+#
+#    # Parameters    
+#    x_min = -1024*pixel_size # (µm)
+#    x_max = 1023*pixel_size # (µm) use 2**n for fast FFT
+#    y_min = -1024*pixel_size # (µm)
+#    y_max = 1023*pixel_size # (µm) use 2**n for fast FFT
+#    #x_min = -512*pixel_size # (µm)
+#    #x_max = 511*pixel_size # (µm) use 2**n for fast FFT
+#    #y_min = -512*pixel_size # (µm)
+#    #y_max = 511*pixel_size # (µm) use 2**n for fast FFT
+#    x = np.arange(x_min, x_max+.001, pixel_size)
+#    y = np.arange(y_min, y_max+.001, pixel_size)
+#    X, Y = np.meshgrid(x, y)
+#
+#    # Set up shape
+#    
+#    if CPI_flag == 1 :
+#        # Use CPI image as mask 
+#        #CPIImagePath = 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/CPI_images/Rosette/CP20080401_204059_387_1.jpg'
+#        M=LoadCpiImageMask(CPIImagePath)
+#    else :
+#        ### Circle
+#        #D= 150 # um
+#        #mask = X**2 + Y**2 < (D/2)**2 # Circle
+#        
+#        ###Rectangle
+#        #H=350
+#        #W=H/3
+#        #W=30
+#        #H=120
+#        W = 50
+#        H = 200 
+#        mask = (abs(X) < (W/2)) & (abs(Y) < (H/2)) # rectangle
+#        
+#        M= np.ones((x.size,y.size))
+#        M[mask] = 0
+#    
+#
+#    
+#    # These areas and diameter are for all pixels where the drop in light intestiy is greater than threshold.
+#    # Be aware of this when comparing with OShea AMT 2019. 
+#    DiameterLevel0=np.zeros(len(Zarray))
+#    DiameterLevel1=np.zeros(len(Zarray))
+#    DiameterLevel2=np.zeros(len(Zarray))
+#    Area0 =np.zeros(len(Zarray)) 
+#    Area1 =np.zeros(len(Zarray))
+#    Area2 =np.zeros(len(Zarray))
+#    Circularity0 =np.zeros(len(Zarray)) 
+#    Circularity1 =np.zeros(len(Zarray))
+#    Circularity2 =np.zeros(len(Zarray))
+#    BoxDiameterLevel0=np.zeros(len(Zarray))
+#    BoxDiameterLevel1=np.zeros(len(Zarray))
+#    BoxDiameterLevel2=np.zeros(len(Zarray))
+#    
+#    #Z= 10000 # distance from object plane um
+#    for i in range(len(Zarray)):
+#        Z= Zarray[i]
+#        I, A0, fx, fy = compute_diffraction(Z, Lambda, pixel_size, x, y, X, Y, M,0)
+#        xOAP, I_binnned, I_binned_75, I_binned_50, I_binned_25= Average2OAPpixels(I, x, y)
+#        DiameterLevel0[i], Area0[i], Circularity0[i],BoxDiameterLevel0[i]= ImageParticleMoreStats(I_binned_25, 10)
+#        DiameterLevel1[i], Area1[i], Circularity1[i],BoxDiameterLevel1[i]= ImageParticleMoreStats(I_binned_50, 10)
+#        DiameterLevel2[i], Area2[i], Circularity2[i],BoxDiameterLevel2[i]= ImageParticleMoreStats(I_binned_75, 10)
+#        if PlotDataFlag == 1 : 
+#            Figurename=SavePath+Prefix+'at'+str(Z)+'.png.'
+#            D0 = DiameterLevel1[0]
+#            Zd_true = (4 * Lambda * Z) / ((D0)**2) 
+#            plot_diffraction(xOAP, xOAP, I_binned_25, I_binned_50,I_binned_75,x,y, M,I,A0, fx, fy, Z,Zd_true, 1, Figurename)
+#
+#    
+#        #x_bins, I_binnned, I_binned_75, I_binned_50, I_binned_25= Average2OAPpixels(I, x,y)
+#    
+#    AreaFraction0=(Area0-Area1)/Area0 # Alow notation from OShea AMT 2019   
+#    AreaFraction1=(Area1-Area2)/Area0 # Amid
+#    AreaFraction2=Area2/Area0 # Ahigh   
+#    
+#    if SaveDataFlag == 1 : 
+#        #FileName= 'Column50by200.h5'
+#        #FileName= 'Circle_125.h5'
+#        FileName= Prefix+'.h5'
+#        try:
+#            os.remove(SavePath+FileName)
+#        except OSError:
+#            pass   
+#        h5f = h5py.File(SavePath+FileName, 'w')
+#    
+#        h5f.create_dataset('Zarray', data=Zarray)
+#        h5f.create_dataset('DiameterLevel0', data=DiameterLevel0)
+#        h5f.create_dataset('DiameterLevel1', data=DiameterLevel1)
+#        h5f.create_dataset('DiameterLevel2', data=DiameterLevel2)
+#        h5f.create_dataset('AreaFraction0', data=AreaFraction0)
+#        h5f.create_dataset('AreaFraction1', data=AreaFraction1)
+#        h5f.create_dataset('AreaFraction2', data=AreaFraction2)
+#        h5f.create_dataset('Circularity0', data=Circularity0)
+#        h5f.create_dataset('Circularity1', data=Circularity1)
+#        h5f.create_dataset('Circularity2', data=Circularity2)
+#        h5f.create_dataset('BoxDiameterLevel0',data=BoxDiameterLevel0)
+#        h5f.create_dataset('BoxDiameterLevel1',data=BoxDiameterLevel1)
+#        h5f.create_dataset('BoxDiameterLevel2',data=BoxDiameterLevel2)
+#        h5f.close()
+#
+#    #return Zarray, DiameterLevel0, DiameterLevel1, DiameterLevel2,AreaFraction0, AreaFraction1, AreaFraction2
+
+#_______________________________________________________________________________________
+
+#plot stats vs Zd for several particles in list
+
+def BatchPlotStatsVsZ():
+
+    SavePath = 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/'
+    
+    #H5FileList = ['Column20by200','Column30by200','Column40by200','Column50by200','Column60by200','Column70by200','Column80by200','Column90by200','Column100by200','Column110by200']
+    #D0List = [110, 115, 120, 125, 130,135,140,145,150,155]
+    
+    #H5FileList = ['Circle125','Rosette_CPI','Column20by200','Column30by200','Column40by200','Column50by200','Column60by200']
+    #D0List = [125,190, 110, 115, 120, 125, 130]
+    
+    H5FileList = ['Column50by300','Column50by100']
+    D0List = [175, 75]
+    
+    fig=plt.figure(figsize=(10,10)) 
+    plt.rcParams.update({'font.size': 12})
+    panel1= plt.subplot(2, 2, 1)    
+    plt.ylabel('Diameter, x')
+    plt.xlabel('Z')
+    #plt.xlim([0,9])
     
     
+    panel2=plt.subplot(2, 2, 2)
+    plt.ylabel('Diameter, y')
+    plt.xlabel('Z')
+    #plt.xlim([0,9])
+
+    panel3=plt.subplot(2, 2, 3)
+    
+    plt.ylabel('Diameter, x')
+    plt.xlabel('Zd')
+    plt.xlim([0,9])
+
+    panel4=plt.subplot(2, 2, 4)
+    
+    plt.ylabel('Diameter, y')
+    plt.xlabel('Zd')
+    plt.xlim([0,9])
+    
+        
+    for i in range(len(H5FileList)) :
+        Filename = H5FileList[i]
+        Data_h5 = h5py.File(SavePath+Filename+'.h5', 'r')              
+        Zarray_mm = np.array(Data_h5['Zarray']) / 1000
+        DiameterBGy1=np.array(Data_h5['DiameterBGy1'])
+        DiameterBGx1=np.array(Data_h5['DiameterBGx1'])
+#        DiameterLevel2=np.array(Data_h5['DiameterLevel2'])
+#        AreaFraction0=np.array(Data_h5['AreaFraction0'])
+#        AreaFraction1=np.array(Data_h5['AreaFraction1'])
+#        AreaFraction2=np.array(Data_h5['AreaFraction2'])
+#        #Circularity0=np.array(Data_h5['Circularity0'])
+#        #Circularity1=np.array(Data_h5['Circularity1'])
+#        #Circularity2=np.array(Data_h5['Circularity2'])
+        Data_h5.close()
+        D0 = D0List[i]
+        #D0 = DiameterLevel1[0]
+        Lambda= 0.658 # laser wavelength
+        Lambda_mm = Lambda /1000
+        Zd_true = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
+        
+        #D_D0 = DiameterLevel1 / D0
+        
+        panel1.plot(Zarray_mm, DiameterBGx1,label=Filename)
+        panel2.plot(Zarray_mm, DiameterBGy1,label=Filename)
+        panel3.plot(Zd_true, DiameterBGx1,label=Filename)
+        panel4.plot(Zd_true, DiameterBGy1,label=Filename)
+
+        #plt.legend()
+
+    #SaveName= SavePath+'ColumnAspect3GreyRatios.png'
+    #plt.savefig(SaveName,dpi=200)
+    #plt.close(fig)
+    
+
+#_______________________________________________________________________________________
+
+#Plot K07 corrected diameter for CPI images 
+                    
+def PlotALLCPI_Korolev():
+
+    
+    fig=plt.figure(figsize=(8,8)) 
+    plt.rcParams.update({'font.size': 14})
+    #panel1= plt.subplot(2, 2, 1)    
+    plt.ylabel('D / D$_{0}$ (K07)' )
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,9])
+    plt.ylim([0,2.5]) 
+
+    
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    
+    ColourList = ['r', 'b', 'g','c','m','y','tab:orange', 'tab:pink','tab:olive']
+    i=0
+    ZdBins_min = 0
+    ZdBins_max = 10
+    ZdBins_delta = 0.1
+    ZdBins_edge = np.arange(ZdBins_min, ZdBins_max, ZdBins_delta)
+    ZdBins_mid= (ZdBins_edge[:-1:1] + ZdBins_edge[1::1]) /2
+    Median = {}
+    
+    
+    for filena in os.listdir(CPIPath):
+        #if filena.endswith(".h5"):
+        print(filena)
+        LW = 0.1
+        Batch_D_KorolevCorr_D0 = []
+        Batch_Zd = []
+        for ImageName in os.listdir(CPIPath+filena):
+            if ImageName.endswith(".h5"):
+                print(ImageName)    
+                #load cpi h5 file
+                Data_h5 = h5py.File(CPIPath+filena+'/'+ImageName, 'r')              
+                Zarray_mm = np.array(Data_h5['Zarray']) / 1000
+                DiameterLevel1=np.array(Data_h5['DiameterLevel1'])
+                Area1_Filled=np.array(Data_h5['Area1_Filled'])
+                Area1_BG=np.array(Data_h5['Area1_BG'])
+                Data_h5.close()
+                D0 = DiameterLevel1[0]
+                Lambda= 0.658 # laser wavelength
+                Lambda_mm = Lambda /1000
+                Zd_true = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
+                VoidArea = Area1_Filled - Area1_BG
+                D_KorolevCorr=KorolevCorrectedD(Area1_Filled, VoidArea,DiameterLevel1)
+                D_KorolevCorr_D0 = D_KorolevCorr / D0
+                D_KorolevCorr_D0_interp = np.interp(ZdBins_mid,Zd_true,D_KorolevCorr_D0) # interpolate diameter ratio to common zd base
+                Batch_D_KorolevCorr_D0= np.append(Batch_D_KorolevCorr_D0,D_KorolevCorr_D0_interp)
+                Batch_Zd = np.append(Batch_Zd,ZdBins_mid)
+                plt.plot(Zd_true, D_KorolevCorr_D0,color='silver',linewidth=LW)             
+                
+            Output_D_KorolevCorr_D0, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_D_KorolevCorr_D0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+            
+            #D_KorolevCorr_D0Median = np.nanmedian(Output_D_KorolevCorr_D0, axis=0) # median at a given Zd
+            i+=1
+            Median[filena] = np.nanmedian(Output_D_KorolevCorr_D0, axis=0) # median at a given Zd
+            
+            
+            
+    HabitList= {'Bullets','ColumnAgg','Columns', 'Plate', 'PlateAgg', 'QuasiSpherical', 'Rosette', 'RosetteAgg'}
+    #CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    #for filena in Median :
+    for filena in HabitList :
+        LW=4
+        Hist,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median,D_D0_IQR, AreaFraction0Median, AreaFraction1Median, AreaFraction2Median = CPI_HabitDmeasD0PDF(CPIPath,filena,0)
+        plt.plot(ZdBinsMid, Median[filena],linewidth=LW, label=filena)
+        plt.legend()
+    
+    SaveName= 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/CPI_K07_habits.png'
+    plt.savefig(SaveName,dpi=200)
+    plt.close(fig) 
+#_______________________________________________________________________________________
+
+# Return median and IQR Dof of habit
+                   
+def FindDoF_Zd():
+
+        
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    
+    ColourList = ['r', 'b', 'g','c','m','y','tab:orange', 'tab:pink','tab:olive']
+    i=0
+    ZdBins_min = 0
+    ZdBins_max = 20
+    ZdBins_delta = 0.1
+    ZdBins_edge = np.arange(ZdBins_min, ZdBins_max, ZdBins_delta)
+    ZdBins_mid= (ZdBins_edge[:-1:1] + ZdBins_edge[1::1]) /2
+    #Batch_Dof = {}
+    
+    
+    for filena in os.listdir(CPIPath):
+        #if filena.endswith(".h5"):
+        #Batch_Dof = {}
+        Batch_Dof=np.nan
+        for ImageName in os.listdir(CPIPath+filena):
+            if ImageName.endswith(".h5"):
+                #load cpi h5 file
+                Data_h5 = h5py.File(CPIPath+filena+'/'+ImageName, 'r')              
+                Zarray_mm = np.array(Data_h5['Zarray']) / 1000
+                DiameterLevel1=np.array(Data_h5['DiameterLevel1'])
+                Data_h5.close()
+                D0 = DiameterLevel1[0]
+                Lambda= 0.658 # laser wavelength
+                Lambda_mm = Lambda /1000
+                Zd_true = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
+                
+                DiameterLevel1_interp = np.interp(ZdBins_mid,Zd_true,DiameterLevel1) # interpolate diameter ratio to common zd base             
+                i, Dof = ReturnXwhenY_0(DiameterLevel1_interp, ZdBins_mid)
+                Batch_Dof= np.array(np.append(Batch_Dof,Dof))
+                
+        print(filena)
+        #print(len(Batch_Dof))
+        print(np.round(np.nanmedian(Batch_Dof),1))
+        print(np.round(np.nanpercentile(Batch_Dof,75) - np.nanpercentile(Batch_Dof,25),1))
+        
+        #return Batch_Dof
+
+#_________________________________________________________________________________
+#returns x for first y that <=0
+
+def ReturnXwhenY_0(yarray, xarray):
+
+    i= 0
+    while (yarray[i] > 0) and (i < len(xarray)-1): 
+        i+=1
+    
+    return i-1, xarray[i-1]
+        
+            
+#_________________________________________________________________________________
+    
+#output medians at given zd values
+
+def Habit_D0_D_median_output(Habit_D0_D_median): 
+
+    Habit = 'Bullets'
+    
+    Output =np.chararray(8)
+    Output[0] = str(np.round(Habit_D0_D_median[Habit + '_median'][9],1))+' ('+str(np.round(Habit_D0_D_median[Habit + '_IQR'][9],1))+')'
+    
+    return Output 
+    
+#_________________________________________________________________________________    
+
+#_______________________________________________________________________________________
+
+#Plot K07 corrected diameter for CPI images 
+                    
+def PlotALLCPI_D_BBox():
+
+    
+    fig=plt.figure(figsize=(8,8)) 
+    plt.rcParams.update({'font.size': 14})
+    #panel1= plt.subplot(2, 2, 1)    
+    plt.ylabel('D / D$_{0}$ (Bounding box)' )
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,12])
+    plt.ylim([0,2.5]) 
+
+    
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    
+    ColourList = ['r', 'b', 'g','c','m','y','tab:orange', 'tab:pink','tab:olive']
+
+    ZdBins_min = 0
+    ZdBins_max = 20
+    ZdBins_delta = 0.1
+    ZdBins_edge = np.arange(ZdBins_min, ZdBins_max, ZdBins_delta)
+    ZdBins_mid= (ZdBins_edge[:-1:1] + ZdBins_edge[1::1]) /2
+    Median = {}
+    
+    
+    for filena in os.listdir(CPIPath):
+        if filena != 'Droplets'  :
+            #if filena.endswith(".h5"):
+            print(filena)
+            LW = 0.1
+            Batch_D_D0 = []
+            Batch_Zd = []
+            for ImageName in os.listdir(CPIPath+filena):
+                if ImageName.endswith(".h5"):
+                    #print(ImageName)    
+                    #load cpi h5 file
+                    Data_h5 = h5py.File(CPIPath+filena+'/'+ImageName, 'r')              
+                    Zarray_mm = np.array(Data_h5['Zarray']) / 1000
+                    DiameterLevel1=np.array(Data_h5['BoxDiameterLevel1'])
+                    Data_h5.close()
+                    D0 = DiameterLevel1[0]
+                    Lambda= 0.658 # laser wavelength
+                    Lambda_mm = Lambda /1000
+                    Zd_true = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
+                    D_D0 = DiameterLevel1 / D0
+                    D_D0_interp = np.interp(ZdBins_mid,Zd_true,D_D0) # interpolate diameter ratio to common zd base
+                    Batch_D_D0= np.append(Batch_D_D0,D_D0_interp)
+                    Batch_Zd = np.append(Batch_Zd,ZdBins_mid)
+                    plt.plot(Zd_true, D_D0,color='silver',linewidth=LW)            
+                    
+            Output_D_D0, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_D_D0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+            Median[filena] = np.nanmedian(Output_D_D0, axis=0) # median at a given Zd
+            
+            
+#    HabitList= {'Bullets','ColumnAgg','Columns', 'Plate', 'PlateAgg', 'QuasiSpherical', 'Rosette', 'RosetteAgg'}
+    #CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    #for filena in Median :
+    for filena in os.listdir(CPIPath):
+        if filena != 'Droplets'  :
+            LW=4
+        #Hist,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median,D_D0_IQR, AreaFraction0Median, AreaFraction1Median, AreaFraction2Median = CPI_HabitDmeasD0PDF(CPIPath,filena,0)
+            plt.plot(ZdBinsMid, Median[filena],linewidth=LW, label=filena)
+            plt.legend()
+    
+    SaveName= 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/CPI_D_D0_bbox_habits.png'
+    plt.savefig(SaveName,dpi=200)
+    plt.close(fig) 
+#_______________________________________________________________________________________
+
+
+#Plot circle equivalent K07 corrected diameter for CPI images 
+                    
+def PlotAllCPI_D_CircleEqiv():
+    PixelSize = 10
+    
+    fig=plt.figure(figsize=(8,8)) 
+    plt.rcParams.update({'font.size': 14})
+    #panel1= plt.subplot(2, 2, 1)    
+    plt.ylabel('D / D$_{0}$ (Circle equivalent)' )
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,2.5]) 
+
+    
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    
+    ColourList = ['r', 'b', 'g','c','m','y','tab:orange', 'tab:pink','tab:olive']
+    ZdBins_min = 0
+    ZdBins_max = 20
+    ZdBins_delta = 0.1
+    ZdBins_edge = np.arange(ZdBins_min, ZdBins_max, ZdBins_delta)
+    ZdBins_mid= (ZdBins_edge[:-1:1] + ZdBins_edge[1::1]) /2
+    Median = {}
+    
+    
+    for filena in os.listdir(CPIPath):
+        if filena != 'Droplets'  :
+        #if filena == 'PlateAgg':
+            print(filena)
+            LW = 0.1
+            Batch_D_D0 = []
+            Batch_Zd = []
+            for ImageName in os.listdir(CPIPath+filena):
+                if ImageName.endswith(".h5"):
+                    #print(ImageName)    
+                    #load cpi h5 file
+                    Data_h5 = h5py.File(CPIPath+filena+'/'+ImageName, 'r')              
+                    Zarray_mm = np.array(Data_h5['Zarray']) / 1000
+                    Area_BBoxLevel1=np.array(Data_h5['Area_BBoxLevel1'])
+                    Dcircle =  PixelSize *2* np.sqrt(Area_BBoxLevel1/np.pi)
+                    Data_h5.close()
+                    D0 = Dcircle[0]
+                    Lambda= 0.658 # laser wavelength
+                    Lambda_mm = Lambda /1000
+                    Zd_true = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
+                    D_D0 = Dcircle / D0
+                    D_D0_interp = np.interp(ZdBins_mid,Zd_true,D_D0) # interpolate diameter ratio to common zd base
+                    Batch_D_D0= np.append(Batch_D_D0,D_D0_interp)
+                    Batch_Zd = np.append(Batch_Zd,ZdBins_mid)
+                    plt.plot(Zd_true, D_D0,color='silver',linewidth=LW)             
+                    #plt.plot(ZdBins_mid, D_D0_interp,color='silver',linewidth=LW)  
+                    
+            Output_D_D0, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_D_D0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+            #Median, BinsLower, BinsUpper, BinsMid = BinLinear_median(Batch_D_D0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))   
+                #D_KorolevCorr_D0Median = np.nanmedian(Output_D_KorolevCorr_D0, axis=0) # median at a given Zd
+            Median[filena] = np.nanmedian(Output_D_D0, axis =0)
+            
+            
+            
+#    HabitList= {'Bullets','ColumnAgg','Columns', 'Plate', 'PlateAgg', 'QuasiSpherical', 'Rosette', 'RosetteAgg'}
+#    #CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+#    #for filena in Median :
+#    for filena in HabitList :
+    for filena in os.listdir(CPIPath):
+        if filena != 'Droplets'  :
+        #if filena == 'PlateAgg':
+            LW=4
+        #Hist,ZdBinsMid,ZdBins_edge,D_D0Bins_edge, D_D0Bins_mid, D_D0Median,D_D0_IQR, AreaFraction0Median, AreaFraction1Median, AreaFraction2Median = CPI_HabitDmeasD0PDF(CPIPath,filena,0)
+            plt.plot(ZdBinsMid, Median[filena],linewidth=LW, label=filena)
+            #plt.plot(ZdBinsMid, Median[filena],'o', label=filena)
+            plt.legend()
+    
+    SaveName= 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/CPI_DCircleEqiv_D0_bbox_habits.png'
+    plt.savefig(SaveName,dpi=200)
+    plt.close(fig) 
+    
+    #return Output_D_D0, Batch_D_D0, Batch_Zd
+
+#_______________________________________________________________________________________
+
+#Plot the CPI greyscale ratios vs z using circle equivalent D
+                    
+
+
+def PlotAllCPI_ShapeVsZ_CircleEquiv():
+
+    PixelSize = 10
+    
+    fig=plt.figure(figsize=(10,10)) 
+    plt.rcParams.update({'font.size': 14})
+    fig.suptitle('Bounding box circle equivalent diameter')
+    
+    panel1= plt.subplot(2, 2, 1)    
+    plt.ylabel('D / D$_{0}$')
+    #plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,2.5])
+    
+    panel2=plt.subplot(2, 2, 2)
+    plt.ylabel('A$_{25-50}$ / A$_{25-100}$')
+    #plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
+
+    panel3=plt.subplot(2, 2, 3)
+    
+    plt.ylabel('A$_{50-75}$ / A$_{25-100}$')
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
+    
+    panel4=plt.subplot(2, 2, 4)
+    
+    plt.ylabel('A$_{75-100}$ / A$_{25-100}$')
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
+    
+    ZdBins_min = 0
+    ZdBins_max = 20
+    ZdBins_delta = 0.1
+    ZdBins_edge = np.arange(ZdBins_min, ZdBins_max, ZdBins_delta)
+    ZdBins_mid= (ZdBins_edge[:-1:1] + ZdBins_edge[1::1]) /2
+    Median = {}
+    
+    
+    #SavePath = 'C:/Users/Admin TEMP/Documents/Diffraction/Plots/'
+    #CPIPath = 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/CPI_images/'
+    #SavePath=C:\Users\Admin TEMP\Dropbox (The University of Manchester)\Diffraction\CPI_output
+    
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    
+    ColourList = ['r', 'b', 'g','c','m','y','tab:orange', 'tab:pink','tab:olive']
+    for filena in os.listdir(CPIPath):
+        if filena != 'Droplets'  :
+        #if filena.endswith(".h5"):
+            print(filena)
+            LW = 0.1
+            Batch_D_D0 = []
+            Batch_Zd = []
+            Batch_AreaFraction0 = []
+            Batch_AreaFraction1 = []
+            Batch_AreaFraction2 = []
+    
+            for ImageName in os.listdir(CPIPath+filena):
+                if ImageName.endswith(".h5"):      
+                    #load cpi h5 file
+                    Data_h5 = h5py.File(CPIPath+filena+'/'+ImageName, 'r')              
+                    Zarray_mm = np.array(Data_h5['Zarray']) / 1000
+                    Area_BBoxLevel0=np.array(Data_h5['Area_BBoxLevel0'])
+                    Area_BBoxLevel1=np.array(Data_h5['Area_BBoxLevel1'])
+                    Area_BBoxLevel2=np.array(Data_h5['Area_BBoxLevel2'])
+                    Data_h5.close()
+                        
+                    DcircleLevel1 =  PixelSize *2* np.sqrt(Area_BBoxLevel1/np.pi)
+                    D0 = DcircleLevel1[0]
+                    Lambda= 0.658 # laser wavelength
+                    Lambda_mm = Lambda /1000
+                    Zd_true = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
+                    D_D0 = DcircleLevel1 / D0
+                        
+                    AreaFraction0=(Area_BBoxLevel0-Area_BBoxLevel1)/Area_BBoxLevel0 # Alow notation from OShea AMT 2019   
+                    AreaFraction1=(Area_BBoxLevel1-Area_BBoxLevel2)/Area_BBoxLevel0 # Amid
+                    AreaFraction2=Area_BBoxLevel2/Area_BBoxLevel0 # Ahigh   
+                  
+                    D_D0_interp = np.interp(ZdBins_mid,Zd_true,D_D0) # interpolate diameter ratio to common zd base
+                    AreaFraction0_interp = np.interp(ZdBins_mid,Zd_true,AreaFraction0) # interpolate to common zd base
+                    AreaFraction1_interp = np.interp(ZdBins_mid,Zd_true,AreaFraction1) # interpolate to common zd base
+                    AreaFraction2_interp = np.interp(ZdBins_mid,Zd_true,AreaFraction2) # interpolate to common zd base
+    
+                    Batch_Zd = np.append(Batch_Zd,ZdBins_mid)
+                    Batch_D_D0= np.append(Batch_D_D0,D_D0_interp)
+                    Batch_AreaFraction0 = np.append(Batch_AreaFraction0,AreaFraction0_interp)
+                    Batch_AreaFraction1 = np.append(Batch_AreaFraction1,AreaFraction1_interp)
+                    Batch_AreaFraction2 = np.append(Batch_AreaFraction2,AreaFraction2_interp)
+                                             
+                    Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_D_D0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+                    Median[filena,'D_D0'] = np.nanmedian(Output, axis =0)
+                    Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+                    Median[filena,'AreaFraction0'] = np.nanmedian(Output, axis =0)
+                    Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction1,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+                    Median[filena,'AreaFraction1'] = np.nanmedian(Output, axis =0)
+                    Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction2,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+                    Median[filena,'AreaFraction2'] = np.nanmedian(Output, axis =0)
+                    
+                    panel1.plot(Zd_true, D_D0,color='silver',linewidth=LW)
+                    panel2.plot(Zd_true, AreaFraction0,color='silver',linewidth=LW)
+                    panel3.plot(Zd_true, AreaFraction1,color='silver',linewidth=LW)
+                    panel4.plot(Zd_true, AreaFraction2,color='silver',linewidth=LW)               
+                
+    #Habit_D0_D_median={}
+    #HabitList= {'Bullets','ColumnAgg','Columns', 'Plate', 'PlateAgg', 'QuasiSpherical', 'Rosette', 'RosetteAgg'}
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    for filena in os.listdir(CPIPath):
+        if filena != 'Droplets'  :
+            LW = 4
+            panel1.plot(ZdBinsMid, Median[filena,'D_D0'],linewidth=LW)
+            panel2.plot(ZdBinsMid, Median[filena,'AreaFraction0'],linewidth=LW)
+            panel3.plot(ZdBinsMid, Median[filena,'AreaFraction1'],linewidth=LW)
+            panel4.plot(ZdBinsMid, Median[filena,'AreaFraction2'],linewidth=LW, label=filena)
+            
+    panel4.legend()
+    
+    SaveName= 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/CPIGreyscaleRatios2_CircleEquiv.png'
+    plt.savefig(SaveName,dpi=200)
+    plt.close(fig)
+
+    #return Habit_D0_D_median
+
+    
+#_______________________________________________________________________________________
+
+#Plot the CPI greyscale ratios vs z using circle equivalent D
+                    
+
+
+def PlotAllCPI_ShapeVsZ_BBox():
+
+    PixelSize = 10
+    
+    fig=plt.figure(figsize=(10,10)) 
+    plt.rcParams.update({'font.size': 14})
+    fig.suptitle('Bounding box mean x-y diameter')
+    panel1= plt.subplot(2, 2, 1)    
+    plt.ylabel('D / D$_{0}$')
+    #plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,2.5])
+    
+    panel2=plt.subplot(2, 2, 2)
+    plt.ylabel('A$_{25-50}$ / A$_{25-100}$')
+    #plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
+
+    panel3=plt.subplot(2, 2, 3)
+    
+    plt.ylabel('A$_{50-75}$ / A$_{25-100}$')
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
+    
+    panel4=plt.subplot(2, 2, 4)
+    
+    plt.ylabel('A$_{75-100}$ / A$_{25-100}$')
+    plt.xlabel('Z$_{d}$')
+    plt.xlim([0,10])
+    plt.ylim([0,1])
+    
+    ZdBins_min = 0
+    ZdBins_max = 20
+    ZdBins_delta = 0.1
+    ZdBins_edge = np.arange(ZdBins_min, ZdBins_max, ZdBins_delta)
+    ZdBins_mid= (ZdBins_edge[:-1:1] + ZdBins_edge[1::1]) /2
+    Median = {}
+    
+    
+    #SavePath = 'C:/Users/Admin TEMP/Documents/Diffraction/Plots/'
+    #CPIPath = 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/CPI_images/'
+    #SavePath=C:\Users\Admin TEMP\Dropbox (The University of Manchester)\Diffraction\CPI_output
+    
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    
+    ColourList = ['r', 'b', 'g','c','m','y','tab:orange', 'tab:pink','tab:olive']
+    for filena in os.listdir(CPIPath):
+        if filena != 'Droplets'  :
+        #if filena.endswith(".h5"):
+            print(filena)
+            LW = 0.1
+            Batch_D_D0 = []
+            Batch_Zd = []
+            Batch_AreaFraction0 = []
+            Batch_AreaFraction1 = []
+            Batch_AreaFraction2 = []
+    
+            for ImageName in os.listdir(CPIPath+filena):
+                if ImageName.endswith(".h5"):      
+                    #load cpi h5 file
+                    Data_h5 = h5py.File(CPIPath+filena+'/'+ImageName, 'r')              
+                    Zarray_mm = np.array(Data_h5['Zarray']) / 1000
+                    BoxDiameterLevel1=np.array(Data_h5['BoxDiameterLevel1'])
+                    Area_BBoxLevel0=np.array(Data_h5['Area_BBoxLevel0'])
+                    Area_BBoxLevel1=np.array(Data_h5['Area_BBoxLevel1'])
+                    Area_BBoxLevel2=np.array(Data_h5['Area_BBoxLevel2'])
+                    Data_h5.close()
+                        
+                    #BoxDiameterLevel1 =  PixelSize *2* np.sqrt(Area_BBoxLevel1/np.pi)
+                    D0 = BoxDiameterLevel1[0]
+                    Lambda= 0.658 # laser wavelength
+                    Lambda_mm = Lambda /1000
+                    Zd_true = (4 * Lambda_mm * Zarray_mm) / ((D0/1000)**2)
+                    D_D0 = BoxDiameterLevel1 / D0
+                        
+                    AreaFraction0=(Area_BBoxLevel0-Area_BBoxLevel1)/Area_BBoxLevel0 # Alow notation from OShea AMT 2019   
+                    AreaFraction1=(Area_BBoxLevel1-Area_BBoxLevel2)/Area_BBoxLevel0 # Amid
+                    AreaFraction2=Area_BBoxLevel2/Area_BBoxLevel0 # Ahigh   
+                  
+                    D_D0_interp = np.interp(ZdBins_mid,Zd_true,D_D0) # interpolate diameter ratio to common zd base
+                    AreaFraction0_interp = np.interp(ZdBins_mid,Zd_true,AreaFraction0) # interpolate to common zd base
+                    AreaFraction1_interp = np.interp(ZdBins_mid,Zd_true,AreaFraction1) # interpolate to common zd base
+                    AreaFraction2_interp = np.interp(ZdBins_mid,Zd_true,AreaFraction2) # interpolate to common zd base
+    
+                    Batch_Zd = np.append(Batch_Zd,ZdBins_mid)
+                    Batch_D_D0= np.append(Batch_D_D0,D_D0_interp)
+                    Batch_AreaFraction0 = np.append(Batch_AreaFraction0,AreaFraction0_interp)
+                    Batch_AreaFraction1 = np.append(Batch_AreaFraction1,AreaFraction1_interp)
+                    Batch_AreaFraction2 = np.append(Batch_AreaFraction2,AreaFraction2_interp)
+                                             
+                    Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_D_D0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+                    Median[filena,'D_D0'] = np.nanmedian(Output, axis =0)
+                    Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction0,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+                    Median[filena,'AreaFraction0'] = np.nanmedian(Output, axis =0)
+                    Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction1,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+                    Median[filena,'AreaFraction1'] = np.nanmedian(Output, axis =0)
+                    Output, ZdBinsLower, ZdBinsUpper, ZdBinsMid=BinLinearV2(Batch_AreaFraction2,Batch_Zd,ZdBins_min,ZdBins_max-ZdBins_delta,int((ZdBins_max-ZdBins_min-ZdBins_delta)/ ZdBins_delta))
+                    Median[filena,'AreaFraction2'] = np.nanmedian(Output, axis =0)
+                    
+                    panel1.plot(Zd_true, D_D0,color='silver',linewidth=LW)
+                    panel2.plot(Zd_true, AreaFraction0,color='silver',linewidth=LW)
+                    panel3.plot(Zd_true, AreaFraction1,color='silver',linewidth=LW)
+                    panel4.plot(Zd_true, AreaFraction2,color='silver',linewidth=LW)               
+                
+    #Habit_D0_D_median={}
+    #HabitList= {'Bullets','ColumnAgg','Columns', 'Plate', 'PlateAgg', 'QuasiSpherical', 'Rosette', 'RosetteAgg'}
+    CPIPath = 'C:/Users/Admin TEMP/Documents/CPI_Habit_Images/'
+    for filena in os.listdir(CPIPath):
+        if filena != 'Droplets'  :
+            LW = 4
+            panel1.plot(ZdBinsMid, Median[filena,'D_D0'],linewidth=LW)
+            panel2.plot(ZdBinsMid, Median[filena,'AreaFraction0'],linewidth=LW)
+            panel3.plot(ZdBinsMid, Median[filena,'AreaFraction1'],linewidth=LW)
+            panel4.plot(ZdBinsMid, Median[filena,'AreaFraction2'],linewidth=LW, label=filena)
+            
+    panel4.legend()
+    
+    SaveName= 'C:/Users/Admin TEMP/Dropbox (The University of Manchester)/Diffraction/Plots/CPIGreyscaleRatios2_BBox.png'
+    plt.savefig(SaveName,dpi=200)
+    plt.close(fig)
+
+    #return Habit_D0_D_median
+
+
+#_______________________________________________________________________________________
+
+
     

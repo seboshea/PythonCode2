@@ -20,3 +20,13 @@ from MyFunctions import datetime_2_s_sincemidnight
 from PICASSO_functions import Avg_CDP_dndDp
 
 
+Index=np.where(ParticleTimeSeconds==ParticleTimeSeconds)
+Index=np.array(Index[0]).astype(float)
+IndexHigh = Index[1:] - Index[0:-1]
+IndexHigh = np.append(IndexHigh,[np.nan] )
+IndexLow = Index[1:] - Index[0:-1]
+IndexLow = np.append([np.nan],IndexLow )
+Direction = np.zeros(len(ParticleTimeSeconds))*np.nan
+Index = Index[IndexHigh > IndexLow]
+Index = np.array(Index).astype(int)
+Direction[Index] = 1
