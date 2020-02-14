@@ -88,18 +88,20 @@ def BatchBothChannels():
 #    Path2DS = 'C:/Users/Admin TEMP/Documents/PICASSO/Flights/rawData/C078/2DS/Output/'
 #   Path2DS = 'C:/Users/Admin TEMP/Documents/PICASSO/Flights/rawData/C078/2DS/Test/'
 #    ExpDate= datetime.datetime(2017, 2, 7, 0, 0, 0)
-    Path2DS = 'C:/Users/Admin TEMP/Documents/CIRCCREX_B895/2ds/oasisoutput/Colocation/'
+#    Path2DS = 'C:/Users/Admin TEMP/Documents/CIRCCREX_B895/2ds/oasisoutput/Colocation/'
 #    Path2DS = 'C:/Users/Admin TEMP/Documents/Clarify/C052/2DS/Output/'
 #    Path2DS = 'C:/Users/Admin TEMP/Documents/Clarify/C031/'
 #    Path2DS = 'C:/Users/Admin TEMP/Documents/DropletGun/Dropgun_2ds/Batch1/90um/Run1_20180322_1038_vchannel/'
 #    Path2DS = 'C:/Users/Admin TEMP/Documents/DropletGun/Dropgun_2ds/Batch1/120um/Run4_20180321_1523_hchannel/'
 #    Path2DS = 'C:/Users/Admin TEMP/Documents/DropletGun/Dropgun_2ds/Batch1/120um/Run5_20180321_1536_hchannel/'
 #    Path2DS = 'C:/Users/Admin TEMP/Documents/DropletGun/Dropgun_2ds/Batch1/120um/Run3_20180321_1503_vchannel/'
+    Path2DS = 'C:/Users/Admin TEMP/Documents/PICASSO/Flights/rawData/C097/2DS/Output/'
+#    Path2DS = 'C:/Users/Admin TEMP/Documents/PICASSO/Flights/rawData/C073/2DS/OasisOut/'
     for filena in os.listdir(Path2DS):
         if filena.endswith(".h5") and filena.startswith('base'):
             print(filena)
             FindParticlesOnBothChannels(Path2DS,filena)
-            #HistMIDPosition2DS(Path2DS,filena)
+            HistMIDPosition2DS(Path2DS,filena)
             #ShatteringDiagnostics(Path2DS,filena)
 
     
@@ -158,6 +160,8 @@ def HistMIDPosition2DS(Path2DS,filena):
     MIDx_Ch0_hist, tmp= np.histogram(MIDx_Ch0,bins=HistBins)
     MIDx_Ch1_hist, tmp= np.histogram(MIDx_Ch1,bins=HistBins)
     
+    percentile = 1.1*max(np.percentile(MIDx_Ch0_hist,98),np.percentile(MIDx_Ch1_hist,99))
+    
     if 1 == 1:
         fig=plt.figure(figsize=(7,7)) 
         plt.rcParams.update({'font.size': 12})
@@ -165,6 +169,7 @@ def HistMIDPosition2DS(Path2DS,filena):
         plt.plot(HistBinsMid,MIDx_Ch1_hist, label= 'Ch = 1' )
         plt.xlabel('Array elements')
         plt.ylabel('Counts')
+        plt.ylim([0,percentile]) #restrict y to below 90 percentile
         plt.legend()
         plt.savefig(Path2DS+filena[:-3]+'_MIDx_edgeRej.png',dpi=200)
         plt.close(fig)
@@ -306,7 +311,7 @@ def FindParticlesOnBothChannels(Path2DS,filena):
     Streak = 5
     MeanXYFlag = 0
     ZdMax = 2
-    Lambda_um = 0.658  
+    Lambda_um = 0.785 
     #load OASIS stats
     Data_h5 = h5py.File(Path2DS+filena, 'r')              
     HeaderMatrixWv=np.array(Data_h5['HeaderMatrixWv'])
@@ -461,7 +466,7 @@ def FindParticlesOnBothChannels(Path2DS,filena):
 
     # Go element by element in channel1. looking for the closest time match in channel0
     ChIDX_high = np.searchsorted(Seconds_CH0, Seconds_CH1, side="left") # side="left" means	Seconds_CH0[i-1] < Seconds_CH1 <= Seconds_CH0[i]
-    ChIDX_high[ChIDX_high>len(Seconds_CH0)] = len(Seconds_CH0)-1 # if outside the array
+    ChIDX_high[ChIDX_high>=len(Seconds_CH0)] = len(Seconds_CH0)-1 # if outside the array
     #check whether i or i-1 gives lowest TimeDelta
     ChTimeDelta_high=np.absolute(Seconds_CH1 - Seconds_CH0[ChIDX_high])
     ChIDX_low = ChIDX_high - 1
@@ -506,7 +511,7 @@ def FindParticlesOnBothChannels(Path2DS,filena):
     IAT_CH1_colocation = IAT_CH1[ChTimeDelta < ColocationThreshold]
     IAT_colocation = np.minimum(IAT_CH0_colocation,IAT_CH1_colocation)
     
-    if 1 == 1:
+    if 1 == 2:
         FileName = 'Export_'+filena
         for i in range(len(ColocationImageID_Ch0)) :
             if (ColocationEdgeCH0[i] == 2 and ColocationEdgeCH1[i] == 2): 
