@@ -34,17 +34,18 @@ def LoadGrayScaleStats(GSpath,ExpDate):
             print(filena)
             Data_h5 = h5py.File(GSpath+filena, 'r')              
             TmpTimesWv=np.array(Data_h5['ParticleTimesWv'])
-            #TmpStats=np.array(Data_h5['PartGrayStatsWv'])
+            HeaderMatrix=np.array(Data_h5['HeaderMatrixWv'])
             TmpStats=np.array(Data_h5['ParticleStatsWv'])
             Data_h5.close()
             gc.collect()       
             if 'ParticleTimesWv' not in dir():
                 ParticleTimesWv=TmpTimesWv
+                HeaderMatrixWv = HeaderMatrix
                 #PartGrayStatsWv=TmpStats
                 ParticleStatsWv=TmpStats
             else:    
                 ParticleTimesWv= np.append(ParticleTimesWv,TmpTimesWv,axis=0)
-                #PartGrayStatsWv= np.append(PartGrayStatsWv,TmpStats,axis=0)
+                HeaderMatrixWv= np.append(HeaderMatrixWv,HeaderMatrixWv,axis=0)
                 ParticleStatsWv= np.append(ParticleStatsWv,TmpStats,axis=0)
             
             
@@ -53,7 +54,7 @@ def LoadGrayScaleStats(GSpath,ExpDate):
     
 
     #plt.plt(StageTime,StageY )
-    return ParticleStatsWv, ParticleTime,ParticleTimesWv
+    return ParticleStatsWv, ParticleTime, ParticleTimesWv, HeaderMatrixWv
 
 
 #_______________________________________________________________________________________
@@ -83,7 +84,8 @@ def LoadGrayScaleStats(GSpath,ExpDate):
 #Constant K_OASIS_PGRAY_YMN_LVL2 = 33
 #Constant K_OASIS_PGRAY_YMX_LVL2 = 34
 
- 
+#MeanXY = 1 # mean of x and y dimension
+#MeanXY = 0 # x dimension
 
 def GrayscaleRatios(Particle_X, Particle_Y, ParticleStatsWv,MeanXY, ThresholdFlag):    
 

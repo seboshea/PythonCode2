@@ -61,10 +61,35 @@ def BinLinearV2(DataY,DataX,StartBin,EndBin, NBins):
     return Output, BinsLower, BinsUpper, BinsMid
 
 
+#__________________________________________________________________________________________________
+
+# median DataY for each DataX bin 
 
 
+def BinLinear_median(DataY,DataX,StartBin,EndBin, NBins):
+    
+    BinWidth=(EndBin-StartBin)/ NBins
+    
+    Output=np.zeros((len(DataX),NBins))*np.nan
+    
+    BinsLower = np.linspace(StartBin,EndBin-BinWidth, NBins) # LowerBin
+    BinsUpper = np.linspace(StartBin+BinWidth,EndBin, NBins) # UpperBin
+    BinsMid= (BinsUpper + BinsLower) / 2
+
+    digitized = np.digitize(DataX, BinsUpper)
+    
+    for i in range(len(DataY)-1):
+        if DataX[i]>=StartBin and DataX[i]<EndBin :
+            Output[i,digitized[i]]=DataY[i]
+
+    
+    Median = np.nanmedian(Output, axis = 0 )
+    
+    
+    return Median, BinsLower, BinsUpper, BinsMid
 
 
+#Median, BinsLower, BinsUpper, BinsMid = BinLinear_median(DataY,DataX,StartBin,EndBin, NBins)
 #__________________________________________________________________________________________________
 
 

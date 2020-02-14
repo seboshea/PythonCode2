@@ -2555,18 +2555,18 @@ def Model_Dropgun_Diameter_6panel():
     #***************** September 2018 ********************
 
     #60um_25_50_75
-    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/20180927111105/Output/'
-    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/'
-    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    PltTitle='60um_25_50_75'
-    ActualDiameter=55
+#    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/20180927111105/Output/'
+#    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/60um_255075/'
+#    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
+#    PltTitle='60um_25_50_75'
+#    ActualDiameter=55
 
     #90um_25_50_75
-    #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/20180927134617/Output/'
-    #StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/'
-    #ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
-    #PltTitle='90um_25_50_75'
-    #ActualDiameter=80    
+    GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/20180927134617/Output/'
+    StagePath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/90um_255075/'
+    ExpDate= datetime.datetime(2018, 9, 27, 0, 0, 0)
+    PltTitle='90um_25_50_75'
+    ActualDiameter=80    
 
     #120um_25_50_75
     #GSpath='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/September2018/120um_255075/Both/Output/'
@@ -2582,9 +2582,10 @@ def Model_Dropgun_Diameter_6panel():
     AreaFraction0,AreaFraction1,AreaFraction2,AreaRatio_2_1,AreaRatio_1_0,DiameterLevel0,DiameterLevel1,DiameterLevel2, FilledArea,VoidArea,DiameterBG,Zd_fromRatios=GrayscaleRatios(Particle_X, Particle_Y, PartGrayStatsWv,0,255075)
     D_KorolevCorr=KorolevCorrectedD(FilledArea, VoidArea,DiameterLevel1)
     D_ReuterBakan=ReuterBakanDiameter(DiameterLevel0,AreaFraction0)
-    fig=plt.figure(figsize=(10,10))
+    fig=plt.figure(figsize=(10,8))
     plt.rcParams.update({'font.size': 12}) 
-    PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,ActualDiameter,29.5, 1)
+    #PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,ActualDiameter,29.5, 1)
+    PlotDiameter4Panel(D_ReuterBakan, D_KorolevCorr,DiameterLevel1, Particle_X,ActualDiameter,29.5, 1)
 
 
     #***************** Model ********************
@@ -2596,9 +2597,11 @@ def Model_Dropgun_Diameter_6panel():
     ModelAreaFraction0,ModelAreaFraction1,ModelAreaFraction2,ModelAreaRatio_2_1,ModelAreaRatio_1_0,ModelDiameterLevel0,ModelDiameterLevel1,ModelDiameterLevel2, ModelFilledArea, ModelVoidArea,ModelDiameterBG,ModelZd_fromRatios=GrayscaleRatios(Model_X, Model_X, ModelStatsExp,0,255075)
     ModelD_KorolevCorr=KorolevCorrectedD(ModelFilledArea, ModelVoidArea,ModelDiameterLevel1)
     ModelD_ReuterBakan=ReuterBakanDiameter(ModelDiameterLevel0,ModelAreaFraction0)
-    PlotDiameter6Panel(ModelD_ReuterBakan, ModelD_KorolevCorr,ModelDiameterLevel1, Model_X,ActualDiameter,50, 2)
+    #PlotDiameter6Panel(ModelD_ReuterBakan, ModelD_KorolevCorr,ModelDiameterLevel1, Model_X,ActualDiameter,50, 2)
+    PlotDiameter4Panel(ModelD_ReuterBakan, ModelD_KorolevCorr,ModelDiameterLevel1, Model_X,ActualDiameter,50, 2)
 
-    Figurename='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'+PltTitle+'_Dcorrections'
+
+    Figurename='C:/Users/Admin TEMP/Documents/DropletGun/CIPscan/ModelCIP_255075/'+PltTitle+'_Dcorrections4panels'
 
     plt.savefig(Figurename,dpi=200)
     plt.close(fig)  
@@ -2641,7 +2644,7 @@ def PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,Diameter, Particle_Y,ActualD
     
     plt.ylabel('Diameter, μm')    
     plt.gca().yaxis.grid(True)
-    plt.gca().set_ylim([0, 150])
+    plt.gca().set_ylim([0, 200])
     
     if Strip == 1 : 
         plt.title('Drop generator')
@@ -2666,7 +2669,7 @@ def PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,Diameter, Particle_Y,ActualD
     plt.axvline(x=Dof_lawson_c8_st, color='g', linestyle='-')
     plt.axvline(x=Dof_lawson_c8_end, color='g', linestyle='-')
     plt.axhline(y=ActualDiameter, color='r', linestyle=':')
-    plt.gca().set_ylim([0, 150])
+    plt.gca().set_ylim([0, 200])
     plt.gca().yaxis.grid(True)
     #plt.legend()
     plt.ylabel('Diameter (RB98), μm')
@@ -2692,7 +2695,7 @@ def PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,Diameter, Particle_Y,ActualD
     plt.axhline(y=ActualDiameter, color='r', linestyle=':')
     plt.ylabel('Diameter (K07), μm')
     plt.xlabel('Distance from object plane, mm')
-    plt.gca().set_ylim([0, 150])
+    plt.gca().set_ylim([0, 200])
     plt.gca().set_xlim([-39, 39]) 
     plt.gca().yaxis.grid(True)
     if Strip == 1 : 
@@ -2708,6 +2711,113 @@ def PlotDiameter6Panel(D_ReuterBakan, D_KorolevCorr,Diameter, Particle_Y,ActualD
     
     #plt.savefig(Figurename,dpi=200)
     #plt.close(fig)   
+
+#_______________________________________________________________________________________   
+
+# Plot diameter with korolev 
+
+def PlotDiameter4Panel(D_ReuterBakan, D_KorolevCorr,Diameter, Particle_Y,ActualDiameter,Y_centre, Strip):
+
+    # Calculate DOF**********
+
+    Lambda = 0.658
+    Dof_lawson_c6= Dof_lawson(ActualDiameter,Lambda,6)
+    Dof_lawson_c6_st=-1*(Dof_lawson_c6/2)
+    Dof_lawson_c6_end=(Dof_lawson_c6/2)   
+    Dof_lawson_c8= Dof_lawson(ActualDiameter,Lambda,8)
+    Dof_lawson_c8_st=-1*(Dof_lawson_c8/2)
+    Dof_lawson_c8_end=(Dof_lawson_c8/2)      
+    
+    # ******************************      
+    
+    Z=Particle_Y#-Y_centre
+
+    ax1=plt.subplot(2, 2, Strip)
+    Diameter_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(Diameter,Z,0,100,100)       
+    BinsMid-=Y_centre
+    mask = ~np.isnan(Diameter_bin) # remove nans
+    filtered_data = [d[m] for d, m in zip(Diameter_bin.T, mask.T)]
+    plt.boxplot(filtered_data,whis=[10,90],showfliers=False,positions=BinsMid)
+    means = [np.nanmean(x) for x in filtered_data]
+    #Sdev=[np.std(x) for x in filtered_data]
+    #plt.plot(BinsMid, means,"o", color='black', markersize=3)
+    plt.axvline(x=Dof_lawson_c6_st, color='b', linestyle='-',label='c=6')
+    plt.axvline(x=Dof_lawson_c6_end, color='b', linestyle='-')
+    plt.axvline(x=Dof_lawson_c8_st, color='g', linestyle='-',label='c=8')
+    plt.axvline(x=Dof_lawson_c8_end, color='g', linestyle='-')
+    plt.axhline(y=ActualDiameter, color='r', linestyle=':')
+    
+    plt.ylabel('Diameter, μm')    
+    plt.gca().yaxis.grid(True)
+    plt.gca().set_ylim([0, 200])
+    
+    if Strip == 1 : 
+        plt.title('Drop generator')
+        #plt.axhspan(ymin=0, ymax=200, xmin=-50, xmax=-28.9, facecolor='gray')
+        plt.axvspan(-50, -29.5, alpha=0.5, color='grey')
+        plt.axvspan(15.5, 50, alpha=0.5, color='grey')
+    else:
+        plt.title('Model')
+        plt.legend()
+    
+#    plt.subplot(3, 2, Strip+2, sharex=ax1) 
+#    D_ReuterBakan_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_ReuterBakan,Z,0,100,100)
+#    BinsMid-=Y_centre
+#    mask = ~np.isnan(D_ReuterBakan_bin) # remove nans
+#    filtered_data = [d[m] for d, m in zip(D_ReuterBakan_bin.T, mask.T)]
+#    plt.boxplot(filtered_data,whis=[10,90],showfliers=False,positions=BinsMid)
+#    means = [np.nanmean(x) for x in filtered_data]
+#    #Sdev=[np.std(x) for x in filtered_data]
+#    #plt.plot(BinsMid, means,"o", color='black', markersize=3)
+#    plt.axvline(x=Dof_lawson_c6_st, color='b', linestyle='-')
+#    plt.axvline(x=Dof_lawson_c6_end, color='b', linestyle='-')
+#    plt.axvline(x=Dof_lawson_c8_st, color='g', linestyle='-')
+#    plt.axvline(x=Dof_lawson_c8_end, color='g', linestyle='-')
+#    plt.axhline(y=ActualDiameter, color='r', linestyle=':')
+#    plt.gca().set_ylim([0, 150])
+#    plt.gca().yaxis.grid(True)
+#    #plt.legend()
+#    plt.ylabel('Diameter (RB98), μm')
+#    if Strip == 1 : 
+#        plt.axvspan(-50, -29.5, alpha=0.5, color='grey')
+#        plt.axvspan(15.5, 50, alpha=0.5, color='grey')
+#    
+  
+    
+    plt.subplot(2, 2, Strip+2, sharex=ax1) 
+    D_KorolevCorr_bin, BinsLower, BinsUpper, BinsMid=BinLinearV2(D_KorolevCorr,Z,0,100,100)       
+    BinsMid-=Y_centre
+    mask = ~np.isnan(D_KorolevCorr_bin) # remove nans
+    filtered_data = [d[m] for d, m in zip(D_KorolevCorr_bin.T, mask.T)]
+    plt.boxplot(filtered_data,whis=[10,90],showfliers=False,positions=BinsMid)
+    means = [np.nanmean(x) for x in filtered_data]
+    #Sdev=[np.std(x) for x in filtered_data]
+    #plt.plot(BinsMid, means,"o", color='black', markersize=3)
+    plt.axvline(x=Dof_lawson_c6_st, color='b', linestyle='-')
+    plt.axvline(x=Dof_lawson_c6_end, color='b', linestyle='-')
+    plt.axvline(x=Dof_lawson_c8_st, color='g', linestyle='-')
+    plt.axvline(x=Dof_lawson_c8_end, color='g', linestyle='-')
+    plt.axhline(y=ActualDiameter, color='r', linestyle=':')
+    plt.ylabel('Diameter (K07), μm')
+    plt.xlabel('Distance from object plane, mm')
+    plt.gca().set_ylim([0, 200])
+    plt.gca().set_xlim([-39, 39]) 
+    plt.gca().yaxis.grid(True)
+    if Strip == 1 : 
+        plt.axvspan(-50, -29.5, alpha=0.5, color='grey')
+        plt.axvspan(15.5, 50, alpha=0.5, color='grey')
+    
+    majorLocator = MultipleLocator(10)
+    majorFormatter = FormatStrFormatter('%d')
+    minorLocator = MultipleLocator(5)
+    plt.gca().xaxis.set_major_locator(majorLocator)
+    plt.gca().xaxis.set_major_formatter(majorFormatter)
+    plt.gca().xaxis.set_minor_locator(minorLocator)# for the minor ticks, use no labels; default NullFormatter
+    
+    #plt.savefig(Figurename,dpi=200)
+    #plt.close(fig)   
+
+
 
 #_______________________________________________________________________________________
  
